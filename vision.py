@@ -144,17 +144,7 @@ class Vision:
                 coefficient -= 0.01
         return None
 
-    def get_image_values(self, frame: np.array) -> tuple:
-        """Takes a frame, returns a tuple of results, or None."""
-        self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
-        self.mask = cv2.inRange(
-            self.hsv, self.HSV_LOWER_BOUND, self.HSV_UPPER_BOUND, dst=self.mask
-        )
-        cnts, hierarchy = cv2.findContours(
-            self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
-        )
-        self.mask = cv2.dilate(self.mask, None, dst=self.mask)
-        self.mask = cv2.erode(self.mask, None, dst=self.mask)
+    def findLoadingBay(self, frame: np.array, cnts: list, hierarchy: np.array):
         cnts = np.array(cnts)
         hierarchy = np.array(hierarchy)[0]
         outer_rects = {}
@@ -199,9 +189,33 @@ class Vision:
 
         self.image = frame.copy()
         for pair in good:
-            self.image = cv2.drawContours(self.image, pair[0][0].reshape((1, 4, 2)), -1, (255, 0, 0), thickness=2)
-            self.image = cv2.drawContours(self.image, pair[1][0].reshape((1, 4, 2)), -1, (255, 0, 255), thickness=1)
+            self.image = cv2.drawContours(
+                self.image,
+                pair[0][0].reshape((1, 4, 2)),
+                -1,
+                (255, 0, 0),
+                thickness=2
+            )
+            self.image = cv2.drawContours(
+                self.image,
+                pair[1][0].reshape((1, 4, 2)),
+                -1,
+                (255, 0, 255),
+                thickness=1,
+            )
         return (0.0, 0.0)
+
+    def get_image_values(self, frame: np.array) -> tuple:
+        """Takes a frame, returns a tuple of results, or None."""
+        self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
+        self.mask = cv2.inRange(
+            self.hsv, self.HSV_LOWER_BOUND, self.HSV_UPPER_BOUND, dst=self.mask
+        )
+        cnts, hierarchy = cv2.findContours(
+            self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
+        )
+        results = self.findLoadingBay(frame, cnts, hierarchy)
+        return results
 
     def run(self):
         """Main process function.
