@@ -121,15 +121,15 @@ class Vision:
         camera.setConfigJson(json.dumps(config["config"]))
         return camera
 
-    def find_polygon(self, contour: np.array, n_points: int = 4):
+    def find_polygon(self, contour: np.ndarray, n_points: int = 4):
         """Finds the polygon which most accurately matches the contour.
 
         Args:
-            contour (np.array): Should be a numpy array of the contour with shape (1, n, 2).
+            contour (np.ndarray): Should be a numpy array of the contour with shape (1, n, 2).
             n_points (int): Designates the number of corners which the polygon should have.
 
         Returns:
-            np.array: A list of points representing the polygon's corners.
+            np.ndarray: A list of points representing the polygon's corners.
         """
         coefficient = self.CONTOUR_COEFFICIENT
         for _ in range(20):
@@ -144,7 +144,7 @@ class Vision:
                 coefficient -= 0.01
         return None
 
-    def findLoadingBay(self, frame: np.array, cnts: list, hierarchy: np.array):
+    def findLoadingBay(self, frame: np.ndarray, cnts: list, hierarchy: np.ndarray):
         cnts = np.array(cnts)
         hierarchy = np.array(hierarchy)[0]
         outer_rects = {}
@@ -205,7 +205,7 @@ class Vision:
             )
         return (0.0, 0.0)
 
-    def get_image_values(self, frame: np.array) -> tuple:
+    def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
