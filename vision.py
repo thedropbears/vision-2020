@@ -1,13 +1,16 @@
+# pylint: disable=C0330
+# pylint: disable=E1101
+
 """The Drop Bears' 2020 vision code.
 
 This code is run on the Raspberry Pi 4. It is uploaded via the browser interface.
 It can be found at https://github.com/thedropbears/vision-2020
 """
 import sys
-import json
 import cv2
 import numpy as np
 from connection import Connection
+from camera_manager import CameraManager
 
 
 class Vision:
@@ -19,8 +22,6 @@ class Vision:
     the only tests that can be done without a Pi running the FRC vision image.
     """
 
-    CONFIG_FILE_PATH = "/boot/frc.json"
-
     # Magic Numbers:
 
     # Order of Power Port points
@@ -30,13 +31,13 @@ class Vision:
     #      \ \________/ /
     #      (1)________(2)
 
-    PORT_POINTS = [ # Given in inches as per the manual
+    PORT_POINTS = [  # Given in inches as per the manual
         [19.625, 0, 0],
         [19.625 / 2, -17, 0],
         [-19.625 / 2, -17, 0],
         [-19.625, 0, 0],
     ]
-    PORT_POINTS = np.array( # Converted to mm
+    PORT_POINTS = np.array(  # Converted to mm
         [(2.54 * i[0], 2.54 * i[1], 0) for i in PORT_POINTS], np.float32
     ).reshape((4, 1, 3))
 
@@ -49,25 +50,26 @@ class Vision:
     INNER_OUTER_RATIO = 3.62
     RECT_AREA_RATIO = 0.2
 
-    FOCAL_LENGTH = 3.67  #mm
-    SENSOR_WIDTH = 4.8  #mm
-    SENSOR_HEIGHT = 3.6 #mm
+    FOCAL_LENGTH = 3.67  # mm
+    SENSOR_WIDTH = 4.8  # mm
+    SENSOR_HEIGHT = 3.6  # mm
     FX = FOCAL_LENGTH * FRAME_WIDTH / SENSOR_WIDTH
     FY = FOCAL_LENGTH * FRAME_HEIGHT / SENSOR_HEIGHT
     CX = FRAME_WIDTH / 2
     CY = FRAME_HEIGHT / 2
-    INTR_MATRIX = np.array([[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]], dtype=np.float32)
+    INTR_MATRIX = np.array(
+        [[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]], dtype=np.float32
+    )
     DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
 
     entries = None
 
     def __init__(self, test=False, using_nt=False):
         # Memory Allocation
-        self.frame = np.zeros(
+        self.hsv = np.zeros(
             shape=(self.FRAME_WIDTH, self.FRAME_HEIGHT, 3), dtype=np.uint8
         )
-        self.hsv = self.frame.copy()
-        self.image = self.frame.copy()
+        self.image = self.hsv.copy()
         self.mask = np.zeros(
             shape=(self.FRAME_WIDTH, self.FRAME_HEIGHT), dtype=np.uint8
         )
@@ -76,45 +78,7 @@ class Vision:
             self.Connection = Connection(using_nt=using_nt, entries=self.entries)
 
             # Camera Configuration
-            self.config_cameras()
-
-            # Sink Creation
-            self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
-
-            # Source Creation
-            self.source = self.cs.putVideo(
-                "Driver_Stream", self.FRAME_WIDTH, self.FRAME_HEIGHT
-            )
-
-    def config_cameras(self):
-        """Gets CvSink objects of each connected camera. Returns Nothing."""
-        self.cs = CameraServer.getInstance()
-        self.camera_configs = self.read_config()
-        self.cameras = [
-            self.start_camera(camera_config) for camera_config in self.camera_configs
-        ]
-
-    def read_config(self) -> list:
-        """Reads camera config JSON.
-        Returns a list of dictionaries containing the name, path, and config info
-        of each camera in the config file.
-        """
-        with open(self.CONFIG_FILE_PATH) as json_file:
-            j = json.load(json_file)
-
-        cameras = j["cameras"]
-        cameras = [
-            {"name": camera["name"], "path": camera["path"], "config": camera}
-            for camera in cameras
-        ]
-
-        return cameras
-
-    def start_camera(self, config: dict):
-        """Takes a VideoSource, returns a CvSink"""
-        camera = self.cs.startAutomaticCapture(name=config["name"], path=config["path"])
-        camera.setConfigJson(json.dumps(config["config"]))
-        return camera
+            self.CameraManager = CameraManager()
 
     def find_polygon(self, contour: np.ndarray, n_points: int = 4):
         """Finds the polygon which most accurately matches the contour.
@@ -139,7 +103,7 @@ class Vision:
                 coefficient -= 0.01
         return None
 
-    def findLoadingBay(self, frame: np.ndarray):
+    def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
             self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
         )
@@ -188,11 +152,7 @@ class Vision:
         self.image = frame.copy()
         for pair in good:
             self.image = cv2.drawContours(
-                self.image,
-                pair[0][0].reshape((1, 4, 2)),
-                -1,
-                (255, 0, 0),
-                thickness=2
+                self.image, pair[0][0].reshape((1, 4, 2)), -1, (255, 0, 0), thickness=2
             )
             self.image = cv2.drawContours(
                 self.image,
@@ -203,7 +163,7 @@ class Vision:
             )
         return (0.0, 0.0)
 
-    def findPowerPort(self, frame: np.ndarray):
+    def find_power_port(self, frame: np.ndarray):
         return (0.0, 0.0)
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
@@ -212,25 +172,26 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, self.HSV_LOWER_BOUND, self.HSV_UPPER_BOUND, dst=self.mask
         )
-        results = self.findLoadingBay(frame)
+        results = self.find_loading_bay(frame)
         return results
 
     def run(self):
         """Main process function.
         When ran, takes image, processes image, and sends results to RIO.
         """
-        sink = self.sinks[0]
-        frame_time, self.frame = sink.grabFrameNoTimeout(image=self.frame)
+        frame_time, self.frame = self.CameraManager.get_frame(0)
         if frame_time == 0:
-            print(sink.getError(), file=sys.stderr)
-            self.source.notifyError(sink.getError())
+            print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
+            self.CameraManager.source.notifyError(
+                self.CameraManager.sinks[0].getError()
+            )
         else:
             results = self.get_image_values(self.frame)
-            self.source.putFrame(self.image)
+            self.CameraManager.source.putFrame(self.image)
             self.Connection.send_results(results)
 
+
 if __name__ == "__main__":
-    from cscore import CameraServer
 
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
