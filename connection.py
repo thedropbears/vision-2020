@@ -1,3 +1,6 @@
+"""The Connection class for The Drop Bears' vision code"""
+
+
 class Connection:
     PI_IP = "10.47.74.6"
     RIO_IP = "10.47.74.2"
@@ -9,7 +12,7 @@ class Connection:
 
         Args:
             using_nt (bool)
-            entries (list): list of the names, in order, of the 
+            entries (list): list of the names, in order, of the
             networktables entries (only if using_nt = True)
         """
         self.using_nt = using_nt
@@ -26,9 +29,8 @@ class Connection:
         NetworkTables.initialize(server=self.RIO_IP)
         NetworkTables.setUpdateRate(1)
         self.nt = NetworkTables.getTable("/vision")
-        for i, entry in enumerate(
-            self.entries
-        ):  # Replace entry strings with nt entries
+        for i, entry in enumerate(self.entries):
+            # Replace entry strings with nt entries
             self.entries[i] = self.nt.getEntry(entry)
 
     def init_UDP_connection(self):
