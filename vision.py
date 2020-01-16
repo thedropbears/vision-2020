@@ -22,6 +22,24 @@ class Vision:
     CONFIG_FILE_PATH = "/boot/frc.json"
 
     # Magic Numbers:
+
+    # Order of Power Port points
+    # (0)__    (0, 0)    __(3)
+    #    \ \            / /
+    #     \ \          / /
+    #      \ \________/ /
+    #      (1)________(2)
+
+    PORT_POINTS = [ # Given in inches as per the manual
+        [19.625, 0, 0],
+        [19.625 / 2, -17, 0],
+        [-19.625 / 2, -17, 0],
+        [-19.625, 0, 0],
+    ]
+    PORT_POINTS = np.array( # Converted to mm
+        [(2.54 * i[0], 2.54 * i[1], 0) for i in PORT_POINTS], np.float32
+    ).reshape((4, 1, 3))
+
     PI_IP = "10.47.74.6"
     RIO_IP = "10.47.74.2"
     UDP_RECV_PORT = 5005
