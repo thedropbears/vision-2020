@@ -3,11 +3,11 @@
 This code is run on the Raspberry Pi 4. It is uploaded via the browser interface.
 It can be found at https://github.com/thedropbears/vision-2020
 """
-import socket
 import sys
 import json
 import cv2
 import numpy as np
+from connection import Connection
 
 
 class Vision:
@@ -40,10 +40,6 @@ class Vision:
         [(2.54 * i[0], 2.54 * i[1], 0) for i in PORT_POINTS], np.float32
     ).reshape((4, 1, 3))
 
-    PI_IP = "10.47.74.6"
-    RIO_IP = "10.47.74.2"
-    UDP_RECV_PORT = 5005
-    UDP_SEND_PORT = 5006
     FRAME_HEIGHT = 240
     FRAME_WIDTH = 320
     HSV_LOWER_BOUND = (30, 120, 80)
@@ -63,9 +59,9 @@ class Vision:
     INTR_MATRIX = np.array([[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]], dtype=np.float32)
     DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
 
-    USING_NT = True
+    entries = None
 
-    def __init__(self, test=False):
+    def __init__(self, test=False, using_nt=False):
         # Memory Allocation
         self.frame = np.zeros(
             shape=(self.FRAME_WIDTH, self.FRAME_HEIGHT, 3), dtype=np.uint8
@@ -77,10 +73,7 @@ class Vision:
         )
 
         if not test:
-            if self.USING_NT:  # NetworkTables Connection
-                self.init_NT_connection()
-            else:  # UDP Connection
-                self.init_UDP_connection()
+            self.Connection = Connection(using_nt=using_nt, entries=self.entries)
 
             # Camera Configuration
             self.config_cameras()
@@ -91,32 +84,6 @@ class Vision:
             # Source Creation
             self.source = self.cs.putVideo(
                 "Driver_Stream", self.FRAME_WIDTH, self.FRAME_HEIGHT
-            )
-
-    def init_NT_connection(self):
-        """Initialises NetworkTables connection to the RIO"""
-        NetworkTables.initialize(server=self.RIO_IP)
-        NetworkTables.setUpdateRate(1)
-        self.nt = NetworkTables.getTable("/vision")
-        self.entry1 = self.nt.getEntry("entry1")
-        self.entry2 = self.nt.getEntry("entry2")
-
-    def init_UDP_connection(self):
-        """Initialises UDP connection to the RIO"""
-        self.sock_send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock_recv.bind((self.RIO_IP, self.UDP_RECV_PORT))
-
-    def send_results(self, results):
-        """Sends results to the RIO depending on connecion type. Returns Nothing."""
-        if self.USING_NT:
-            self.entry1.setNumber(results[0])
-            self.entry2.setNumber(results[1])
-            NetworkTables.flush()
-        else:
-            self.sock_send.sendto(
-                f"{results[0]},{results[1]}".encode("utf-8"),
-                (self.PI_IP, self.UDP_SEND_PORT),
             )
 
     def config_cameras(self):
@@ -260,11 +227,10 @@ class Vision:
         else:
             results = self.get_image_values(self.frame)
             self.source.putFrame(self.image)
-            self.send_results(results)
+            self.Connection.send_results(results)
 
 if __name__ == "__main__":
     from cscore import CameraServer
-    from networktables import NetworkTables
 
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
