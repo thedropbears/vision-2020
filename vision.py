@@ -144,7 +144,10 @@ class Vision:
                 coefficient -= 0.01
         return None
 
-    def findLoadingBay(self, frame: np.ndarray, cnts: list, hierarchy: np.ndarray):
+    def findLoadingBay(self, frame: np.ndarray):
+        cnts, hierarchy = cv2.findContours(
+            self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
+        )
         cnts = np.array(cnts)
         hierarchy = np.array(hierarchy)[0]
         outer_rects = {}
@@ -211,10 +214,7 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, self.HSV_LOWER_BOUND, self.HSV_UPPER_BOUND, dst=self.mask
         )
-        cnts, hierarchy = cv2.findContours(
-            self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
-        )
-        results = self.findLoadingBay(frame, cnts, hierarchy)
+        results = self.findLoadingBay(frame)
         return results
 
     def run(self):
