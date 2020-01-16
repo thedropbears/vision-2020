@@ -35,6 +35,16 @@ class Vision:
     INNER_OUTER_RATIO = 3.62
     RECT_AREA_RATIO = 0.2
 
+    FOCAL_LENGTH = 3.67  #mm
+    SENSOR_WIDTH = 4.8  #mm
+    SENSOR_HEIGHT = 3.6 #mm
+    FX = FOCAL_LENGTH * FRAME_WIDTH / SENSOR_WIDTH
+    FY = FOCAL_LENGTH * FRAME_HEIGHT / SENSOR_HEIGHT
+    CX = FRAME_WIDTH / 2
+    CY = FRAME_HEIGHT / 2
+    INTR_MATRIX = np.array([[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]], dtype=np.float32)
+    DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
+
     USING_NT = True
 
     def __init__(self, test=False):
