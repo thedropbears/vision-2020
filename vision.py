@@ -236,6 +236,9 @@ class Vision:
             )
         return (0.0, 0.0)
 
+    def findPowerPort(self, frame: np.ndarray):
+        return (0.0, 0.0)
+
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
