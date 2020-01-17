@@ -1,7 +1,9 @@
 """The Connection class for The Drop Bears' vision code"""
 
-from magic_numbers import *
-
+PI_IP = "10.47.74.6"
+RIO_IP = "10.47.74.2"
+UDP_RECV_PORT = 5005
+UDP_SEND_PORT = 5006
 
 class Connection:
     def __init__(self, using_nt=False, entries=None):
