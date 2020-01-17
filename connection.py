@@ -1,12 +1,9 @@
 """The Connection class for The Drop Bears' vision code"""
 
+from magic_numbers import *
+
 
 class Connection:
-    PI_IP = "10.47.74.6"
-    RIO_IP = "10.47.74.2"
-    UDP_RECV_PORT = 5005
-    UDP_SEND_PORT = 5006
-
     def __init__(self, using_nt=False, entries=None):
         """Initialises Connection class.
 
@@ -26,7 +23,7 @@ class Connection:
         """Initialises NetworkTables connection to the RIO"""
         from networktables import NetworkTables
 
-        NetworkTables.initialize(server=self.RIO_IP)
+        NetworkTables.initialize(server=RIO_IP)
         NetworkTables.setUpdateRate(1)
         self.nt = NetworkTables.getTable("/vision")
         for i, entry in enumerate(self.entries):
@@ -39,7 +36,7 @@ class Connection:
 
         self.sock_send = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock_recv = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock_recv.bind((self.RIO_IP, self.UDP_RECV_PORT))
+        self.sock_recv.bind((RIO_IP, UDP_RECV_PORT))
 
     def send_results(self, results):
         """Sends results to the RIO depending on connecion type. Returns Nothing."""
@@ -49,6 +46,5 @@ class Connection:
             NetworkTables.flush()
         else:
             self.sock_send.sendto(
-                f"{results[0]},{results[1]}".encode("utf-8"),
-                (self.PI_IP, self.UDP_SEND_PORT),
+                f"{results[0]},{results[1]}".encode("utf-8"), (PI_IP, UDP_SEND_PORT)
             )

@@ -2,13 +2,11 @@
 
 import json
 import numpy as np
+from magic_numbers import *
 
 
 class CameraManager:
     CONFIG_FILE_PATH = "/boot/frc.json"
-
-    FRAME_WIDTH = 320
-    FRAME_HEIGHT = 240
 
     def __init__(self):
         from cscore import CameraServer
@@ -21,13 +19,9 @@ class CameraManager:
         ]
 
         self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
-        self.source = self.cs.putVideo(
-            "Driver_Stream", self.FRAME_WIDTH, self.FRAME_HEIGHT
-        )
+        self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
 
-        self.frame = np.zeros(
-            shape=(self.FRAME_WIDTH, self.FRAME_HEIGHT, 3), dtype=np.uint8
-        )
+        self.frame = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
 
     def read_config_JSON(self) -> list:
         """Reads camera config JSON.

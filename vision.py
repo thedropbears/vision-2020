@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 from connection import Connection
 from camera_manager import CameraManager
+from magic_numbers import *
 
 
 class Vision:
@@ -22,57 +23,13 @@ class Vision:
     the only tests that can be done without a Pi running the FRC vision image.
     """
 
-    # Magic Numbers:
-
-    # Order of Power Port points
-    # (0)__    (0, 0)    __(3)
-    #    \ \            / /
-    #     \ \          / /
-    #      \ \________/ /
-    #      (1)________(2)
-
-    PORT_POINTS = [  # Given in inches as per the manual
-        [19.625, 0, 0],
-        [19.625 / 2, -17, 0],
-        [-19.625 / 2, -17, 0],
-        [-19.625, 0, 0],
-    ]
-    PORT_POINTS = np.array(  # Converted to mm
-        [(2.54 * i[0], 2.54 * i[1], 0) for i in PORT_POINTS], np.float32
-    ).reshape((4, 1, 3))
-
-    FRAME_HEIGHT = 240
-    FRAME_WIDTH = 320
-    HSV_LOWER_BOUND = (30, 120, 80)
-    HSV_UPPER_BOUND = (100, 255, 240)
-    MIN_CONTOUR_AREA = 500
-    CONTOUR_COEFFICIENT = 0.05
-    INNER_OUTER_RATIO = 3.62
-    RECT_AREA_RATIO = 0.2
-
-    FOCAL_LENGTH = 3.67  # mm
-    SENSOR_WIDTH = 4.8  # mm
-    SENSOR_HEIGHT = 3.6  # mm
-    FX = FOCAL_LENGTH * FRAME_WIDTH / SENSOR_WIDTH
-    FY = FOCAL_LENGTH * FRAME_HEIGHT / SENSOR_HEIGHT
-    CX = FRAME_WIDTH / 2
-    CY = FRAME_HEIGHT / 2
-    INTR_MATRIX = np.array(
-        [[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]], dtype=np.float32
-    )
-    DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
-
     entries = None
 
     def __init__(self, test=False, using_nt=False):
         # Memory Allocation
-        self.hsv = np.zeros(
-            shape=(self.FRAME_WIDTH, self.FRAME_HEIGHT, 3), dtype=np.uint8
-        )
+        self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
-        self.mask = np.zeros(
-            shape=(self.FRAME_WIDTH, self.FRAME_HEIGHT), dtype=np.uint8
-        )
+        self.mask = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT), dtype=np.uint8)
 
         if not test:
             self.Connection = Connection(using_nt=using_nt, entries=self.entries)
@@ -131,7 +88,7 @@ class Vision:
         good = []
 
         for i in outer_rects:
-            if outer_rects[i][2] > self.MIN_CONTOUR_AREA:
+            if outer_rects[i][2] > MIN_CONTOUR_AREA:
                 current_inners = []
                 next_child = outer_rects[i][1][2]
                 while next_child != -1:
@@ -139,13 +96,13 @@ class Vision:
                     next_child = inner_rects[next_child][1][0]
                 largest = max(current_inners, key=lambda x: x[2])
                 if (
-                    abs((outer_rects[i][2] / largest[2]) - self.INNER_OUTER_RATIO) < 0.5
+                    abs((outer_rects[i][2] / largest[2]) - INNER_OUTER_RATIO) < 0.5
                     and abs(
                         (cv2.contourArea(outer_rects[i][0]) / outer_rects[i][2]) - 1
                     )
-                    < self.RECT_AREA_RATIO
+                    < RECT_AREA_RATIO
                     and abs((cv2.contourArea(largest[0]) / largest[2]) - 1)
-                    < self.RECT_AREA_RATIO
+                    < RECT_AREA_RATIO
                 ):
                     good.append((outer_rects[i], largest))
 
@@ -170,7 +127,7 @@ class Vision:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
-            self.hsv, self.HSV_LOWER_BOUND, self.HSV_UPPER_BOUND, dst=self.mask
+            self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
         results = self.find_loading_bay(frame)
         return results
