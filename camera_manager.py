@@ -3,25 +3,38 @@
 import json
 import numpy as np
 from magic_numbers import *
+import cv2
 
 
 class CameraManager:
     CONFIG_FILE_PATH = "/boot/frc.json"
 
-    def __init__(self):
-        from cscore import CameraServer
+    def __init__(self, test_img=None, test_video=None, test_display=False):
+        self.testing = False
+        self.frame = None
+        self.video = None
+        self.test_display = test_display
+        if test_img:
+            self.testing = True
+            self.frame = test_img
+        elif test_video:
+            self.testing = True
+            self.video = test_video
+        else:
+            from cscore import CameraServer
 
-        self.cs = CameraServer.getInstance()
-        self.camera_configs = self.read_config_JSON()
+            self.cs = CameraServer.getInstance()
+            self.camera_configs = self.read_config_JSON()
 
-        self.cameras = [
-            self.start_camera(camera_config) for camera_config in self.camera_configs
-        ]
+            self.cameras = [
+                self.start_camera(camera_config)
+                for camera_config in self.camera_configs
+            ]
 
-        self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
-        self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
+            self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
+            self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
 
-        self.frame = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
+            self.frame = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
 
     def read_config_JSON(self) -> list:
         """Reads camera config JSON.
@@ -47,5 +60,19 @@ class CameraManager:
 
     def get_frame(self, camera: int) -> tuple:
         """Grabs a frame from the specified sink"""
+        if self.testing:
+            if self.video:
+                self.frame = self.video.read()[1]
+                return 1, self.frame
+            else:
+                return 1, self.frame
         frame_time, self.frame = self.sinks[camera].grabFrameNoTimeout(image=self.frame)
         return frame_time, self.frame
+
+    def send_frame(self, frame):
+        if self.test_display:
+            cv2.imshow("frame", self.frame)
+            cv2.imshow("image", frame)
+            cv2.waitKey(0)
+        else:
+            self.source.putFrame(frame)

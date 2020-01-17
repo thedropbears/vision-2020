@@ -25,17 +25,16 @@ class Vision:
 
     entries = None
 
-    def __init__(self, test=False, using_nt=False):
+    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False):
         # Memory Allocation
         self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
         self.mask = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT), dtype=np.uint8)
 
-        if not test:
-            self.Connection = Connection(using_nt=using_nt, entries=self.entries)
+        # Camera Configuration
+        self.CameraManager = CameraManager(test_img=test_img, test_video=test_video, test_display=test_display)
 
-            # Camera Configuration
-            self.CameraManager = CameraManager()
+        self.Connection = Connection(using_nt=using_nt, entries=self.entries, test=test_video or test_img)
 
     def find_polygon(self, contour: np.ndarray, n_points: int = 4):
         """Finds the polygon which most accurately matches the contour.
@@ -127,9 +126,10 @@ class Vision:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
-            self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
+            self.hsv, (75, 90, 96), (85, 255, 255), dst=self.mask
         )
         results = self.find_loading_bay(frame)
+        self.image = self.mask
         return results
 
     def run(self):
@@ -144,7 +144,7 @@ class Vision:
             )
         else:
             results = self.get_image_values(self.frame)
-            self.CameraManager.source.putFrame(self.image)
+            self.CameraManager.send_frame(self.image)
             self.Connection.send_results(results)
 
 

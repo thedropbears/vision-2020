@@ -1,12 +1,15 @@
 """The Connection class for The Drop Bears' vision code"""
 
+from networktables import NetworkTables
+
 PI_IP = "10.47.74.6"
 RIO_IP = "10.47.74.2"
 UDP_RECV_PORT = 5005
 UDP_SEND_PORT = 5006
 
+
 class Connection:
-    def __init__(self, using_nt=False, entries=None):
+    def __init__(self, using_nt=False, entries=None, test=False):
         """Initialises Connection class.
 
         Args:
@@ -14,17 +17,19 @@ class Connection:
             entries (list): list of the names, in order, of the
             networktables entries (only if using_nt = True)
         """
-        self.using_nt = using_nt
-        if self.using_nt:
-            self.entries = entries
-            self.init_NT_connection()
+        if test:
+            self.test = True
         else:
-            self.init_UDP_connection()
+            self.test = False
+            self.using_nt = using_nt
+            if self.using_nt:
+                self.entries = entries
+                self.init_NT_connection()
+            else:
+                self.init_UDP_connection()
 
     def init_NT_connection(self):
         """Initialises NetworkTables connection to the RIO"""
-        from networktables import NetworkTables
-
         NetworkTables.initialize(server=RIO_IP)
         NetworkTables.setUpdateRate(1)
         self.nt = NetworkTables.getTable("/vision")
@@ -42,7 +47,9 @@ class Connection:
 
     def send_results(self, results):
         """Sends results to the RIO depending on connecion type. Returns Nothing."""
-        if self.using_nt:
+        if self.test:
+            pass
+        elif self.using_nt:
             for i, entry in enumerate(self.entries):
                 entry.setNumber(results[i])
             NetworkTables.flush()
