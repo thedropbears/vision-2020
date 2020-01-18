@@ -3,6 +3,7 @@ import cv2
 import time
 import numpy as np
 
+
 def pixel_green_check(pixel):  # (B, G, R)
     """Tests if a pixel is 'green enough'"""
     if pixel[1] <= MIN_GREEN:

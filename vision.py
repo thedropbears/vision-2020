@@ -46,7 +46,7 @@ class Vision:
         Returns:
             np.ndarray: A list of points representing the polygon's corners.
         """
-        coefficient = self.CONTOUR_COEFFICIENT
+        coefficient = CONTOUR_COEFFICIENT
         for _ in range(20):
             epsilon = coefficient * cv2.arcLength(contour, True)
             poly_approx = cv2.approxPolyDP(contour, epsilon, True)
@@ -126,7 +126,7 @@ class Vision:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
-            self.hsv, (75, 90, 96), (85, 255, 255), dst=self.mask
+            self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
         results = self.find_loading_bay(frame)
         self.image = self.mask
