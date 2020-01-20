@@ -14,7 +14,7 @@ FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 
 # Recognition parameters. These should be variables that come from calibration.
-HSV_LOWER_BOUND = (70, 70, 128)
+HSV_LOWER_BOUND = (60, 70, 15)
 HSV_UPPER_BOUND = (90, 255, 255)
 
 # Target shape parameters

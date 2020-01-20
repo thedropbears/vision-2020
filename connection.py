@@ -17,7 +17,7 @@ class Connection:
             entries (list): list of the names, in order, of the
             networktables entries (only if using_nt = True)
         """
-        if test:
+        if type(test) != type(None):
             self.test = True
         else:
             self.test = False

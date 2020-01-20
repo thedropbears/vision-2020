@@ -120,7 +120,11 @@ class Vision:
         return (0.0, 0.0)
 
     def find_power_port(self, frame: np.ndarray):
-        return (0.0, 0.0)
+        cnts, _ = cv2.findContours(self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+        largestCnt = max(cnts, key = lambda x:cv2.contourArea(x))
+        largestSize = cv2.contourArea(largestCnt)
+        x,y,w,h = cv2.boundingRect(largestCnt)
+        return (round(x+w/2), round(y+h/2))
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
@@ -128,8 +132,9 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
-        results = self.find_loading_bay(frame)
+        results = self.find_power_port(frame)
         self.image = self.mask
+        self.image = cv2.circle(self.image, results, 20, (255, 0 ,0), 1)
         return results
 
     def run(self):
@@ -152,6 +157,7 @@ if __name__ == "__main__":
 
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
+    #testImg = cv2.imread("out1.PNG")
 
     camera_server = Vision()
     while True:
