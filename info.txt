@@ -1,9 +1,0 @@
-all captured at around 12 m back and 1/2 meter left (cameras left)
-40 brightnes
-0 contrast
-0 gain
-100 saturation
-white ballance 4200
-sharpness 0
-exposure 1
-zoom 100 or 200

@@ -14,7 +14,7 @@ class CameraManager:
         self.frame = None
         self.video = None
         self.test_display = test_display
-        if (test_img): #cannot compare the nparray and None
+        if test_img:
             self.testing = True
             self.frame = test_img
         elif test_video:

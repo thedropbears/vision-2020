@@ -12,6 +12,7 @@ import numpy as np
 from connection import Connection
 from camera_manager import CameraManager
 from magic_numbers import *
+import math
 
 
 class Vision:
@@ -124,7 +125,10 @@ class Vision:
         largestCnt = max(cnts, key = lambda x:cv2.contourArea(x))
         largestSize = cv2.contourArea(largestCnt)
         x,y,w,h = cv2.boundingRect(largestCnt)
-        return (round(x+w/2), round(y+h/2))
+        return (x, y, w, h)
+
+    def x2angle(self, X):
+        return ((X/160)-1)*0.57910025#33.18 degrees       x/half screen width *fov
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
@@ -133,9 +137,20 @@ class Vision:
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
         results = self.find_power_port(frame)
+        properX = results[0]+results[2]/2
+        angle = self.x2angle(properX)
+        distance = 0.9989/math.tan((results[2]/320)*0.579)
+        distance -= angle*1.9
+        distance *= 0.62
         self.image = self.mask
-        self.image = cv2.circle(self.image, results, 20, (255, 0 ,0), 1)
-        return results
+        self.image = cv2.rectangle(self.image, (results[0], results[1]), (results[0]+results[2], results[1]+results[3]), (255, 0 ,0))
+        print("distance ", end="")
+        print(distance)
+        print("angle ", end="")
+        print(angle)
+        print("width ",end="")
+        print(results[2])
+        return (results, angle, distance)
 
     def run(self):
         """Main process function.
@@ -154,11 +169,10 @@ class Vision:
 
 
 if __name__ == "__main__":
-
+    #testImg = cv2.imread("11m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
-    #testImg = cv2.imread("out1.PNG")
 
-    camera_server = Vision()
+    camera_server = Vision()#Vision(test_img = testImg, test_display = True)
     while True:
         camera_server.run()
