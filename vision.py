@@ -130,26 +130,33 @@ class Vision:
     def x2angle(self, X):
         return ((X/160)-1)*0.57910025#33.18 degrees       x/half screen width *fov
 
+    def createAnnotatedDisplay(self, frame, results, printing = False):
+        frame = cv2.rectangle(frame, (results[0], results[1]), (results[0]+results[2], results[1]+results[3]), (255, 0 ,0))
+
+        if printing:
+            print("distance ", end="")
+            print(distance)
+            print("angle ", end="")
+            print(angle)
+            print("width ",end="")
+            print(results[2])
+
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
+
         results = self.find_power_port(frame)
-        properX = results[0]+results[2]/2
-        angle = self.x2angle(properX)
-        distance = 0.9989/math.tan((results[2]/320)*0.579)
+        midX = results[0]+results[2]/2
+        angle = self.x2angle(midX)
+        distance = 0.9989/math.tan((results[2]/320)*0.579) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
+        #this just uses a tan and then tries to correct itself
         distance -= angle*1.9
         distance *= 0.62
         self.image = self.mask
-        self.image = cv2.rectangle(self.image, (results[0], results[1]), (results[0]+results[2], results[1]+results[3]), (255, 0 ,0))
-        print("distance ", end="")
-        print(distance)
-        print("angle ", end="")
-        print(angle)
-        print("width ",end="")
-        print(results[2])
+
         return (results, angle, distance)
 
     def run(self):
@@ -164,12 +171,13 @@ class Vision:
             )
         else:
             results = self.get_image_values(self.frame)
+            self.createAnnotatedDisplay(self.frame, results[0])
             self.CameraManager.send_frame(self.image)
             self.Connection.send_results(results)
 
 
 if __name__ == "__main__":
-    #testImg = cv2.imread("11m.PNG")
+    #testImg = cv2.imread("tests/power_port/9m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
 
