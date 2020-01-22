@@ -26,7 +26,8 @@ class Vision:
 
     entries = None
 
-    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False):
+    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False, entries = []):
+        self.entries = entries
         # Memory Allocation
         self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
@@ -121,10 +122,13 @@ class Vision:
         return (0.0, 0.0)
 
     def find_power_port(self, frame: np.ndarray):
-        cnts, _ = cv2.findContours(self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-        largestCnt = max(cnts, key = lambda x:cv2.contourArea(x))
-        largestSize = cv2.contourArea(largestCnt)
-        x,y,w,h = cv2.boundingRect(largestCnt)
+        _, cnts, _ = cv2.findContours(frame, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        if len(cnts) >= 1:
+            largestCnt = max(cnts, key = lambda x:cv2.contourArea(x))
+            largestSize = cv2.contourArea(largestCnt)
+            x,y,w,h = cv2.boundingRect(largestCnt)
+        else:
+            return None
         return (x, y, w, h)
 
     def x2angle(self, X):
@@ -148,16 +152,19 @@ class Vision:
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
 
-        results = self.find_power_port(frame)
-        midX = results[0]+results[2]/2
-        angle = self.x2angle(midX)
-        distance = 0.9989/math.tan((results[2]/320)*0.579) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
-        #this just uses a tan and then tries to correct itself
-        distance -= angle*1.9
-        distance *= 0.62
-        self.image = self.mask
+        results = self.find_power_port(self.mask)
+        if results != None:
+            midX = results[0]+results[2]/2
+            angle = self.x2angle(midX)
+            distance = 0.9989/math.tan((results[2]/320)*0.579) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
+            #this just uses a tan and then tries to correct itself
+            distance -= angle*1.9
+            distance *= 0.62
+            self.image = self.mask
 
-        return (results, angle, distance)
+            return (results, angle, distance)
+        else:
+            return None
 
     def run(self):
         """Main process function.
@@ -171,9 +178,10 @@ class Vision:
             )
         else:
             results = self.get_image_values(self.frame)
-            self.createAnnotatedDisplay(self.frame, results[0])
+            if results != None:
+                self.createAnnotatedDisplay(self.image, results[0])
+                self.Connection.send_results(results)
             self.CameraManager.send_frame(self.image)
-            self.Connection.send_results(results)
 
 
 if __name__ == "__main__":
@@ -181,6 +189,6 @@ if __name__ == "__main__":
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
 
-    camera_server = Vision()#Vision(test_img = testImg, test_display = True)
+    camera_server = Vision(using_nt = True)
     while True:
         camera_server.run()
