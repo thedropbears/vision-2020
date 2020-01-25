@@ -5,7 +5,7 @@ from vision import Vision
 
 class VisionTests(unittest.TestCase):
     def test_sample_images(self):
-        f = open("./tests/results.csv", "r")
+        f = open("./tests/power_port/results.csv", "r")
         lines = f.read().split("\n")
         f.close()
         for line in lines[1:]:

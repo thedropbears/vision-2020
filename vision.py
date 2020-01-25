@@ -13,7 +13,7 @@ from connection import Connection
 from camera_manager import CameraManager
 from magic_numbers import *
 import math
-
+import time
 
 class Vision:
     """Main vision class.
@@ -26,8 +26,8 @@ class Vision:
 
     entries = None
 
-    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False, entries = []):
-        self.entries = entries
+    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False):
+        #self.entries = entries
         # Memory Allocation
         self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
@@ -36,7 +36,8 @@ class Vision:
         # Camera Configuration
         self.CameraManager = CameraManager(test_img=test_img, test_video=test_video, test_display=test_display)
 
-        self.Connection = Connection(using_nt=using_nt, entries=self.entries, test=test_video or test_img)
+        self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
+        self.zoom = 100
 
     def find_polygon(self, contour: np.ndarray, n_points: int = 4):
         """Finds the polygon which most accurately matches the contour.
@@ -127,12 +128,9 @@ class Vision:
             largestCnt = max(cnts, key = lambda x:cv2.contourArea(x))
             largestSize = cv2.contourArea(largestCnt)
             x,y,w,h = cv2.boundingRect(largestCnt)
+            return (x, y, w, h)
         else:
             return None
-        return (x, y, w, h)
-
-    def x2angle(self, X):
-        return ((X/160)-1)*0.57910025#33.18 degrees       x/half screen width *fov
 
     def createAnnotatedDisplay(self, frame, results, printing = False):
         frame = cv2.rectangle(frame, (results[0], results[1]), (results[0]+results[2], results[1]+results[3]), (255, 0 ,0))
@@ -154,12 +152,12 @@ class Vision:
 
         results = self.find_power_port(self.mask)
         if results != None:
-            midX = results[0]+results[2]/2
-            angle = self.x2angle(midX)
-            distance = 0.9989/math.tan((results[2]/320)*0.579) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
+            midX = results[0]+results[2]/2 #finds middle of target
+            angle = ((midX/FRAME_WIDTH/2)-1)*MAX_FOV/2#33.18 degrees #gets the angle
+            distance = PORT_DIMENTIONS[0]/math.tan((results[2]/FRAME_WIDTH/2)*MAX_FOV/2) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
             #this just uses a tan and then tries to correct itself
             distance -= angle*1.9
-            distance *= 0.62
+            distance *= 0.6
             self.image = self.mask
 
             return (results, angle, distance)
@@ -180,7 +178,10 @@ class Vision:
             results = self.get_image_values(self.frame)
             if results != None:
                 self.createAnnotatedDisplay(self.image, results[0])
-                self.Connection.send_results(results)
+                self.Connection.send_results((results[2], results[1], time.monotonic())) #distance (meters), angle (radians), timestamp
+
+                self.zoom = 200-results[1]
+                #self.CameraManager.setCameraProperty(0, "zoom", 100)
             self.CameraManager.send_frame(self.image)
 
 

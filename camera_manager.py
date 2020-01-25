@@ -14,10 +14,10 @@ class CameraManager:
         self.frame = None
         self.video = None
         self.test_display = test_display
-        if test_img:
+        if not type(test_img) == type(None):
             self.testing = True
             self.frame = test_img
-        elif test_video:
+        elif not type(test_video) == type(None):
             self.testing = True
             self.video = test_video
         else:
@@ -76,3 +76,6 @@ class CameraManager:
             cv2.waitKey(0)
         else:
             self.source.putFrame(frame)
+
+    def setCameraProperty(self, camera, property, value):
+        self.camera[camera].getProperty(property).set(value)

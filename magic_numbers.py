@@ -9,6 +9,9 @@ FOCAL_LENGTH = 3.67  # mm
 SENSOR_WIDTH = 4.8  # mm
 SENSOR_HEIGHT = 3.6  # mm
 
+MAX_FOV_WIDTH = 1.158375#66.37
+MAX_FOV_HEIGHT = 0.91193453#52.25
+
 # Camera settings
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
@@ -24,6 +27,8 @@ HSV_UPPER_BOUND = (90, 255, 255)
 #     \ \          / /
 #      \ \________/ /
 #      (1)________(2)
+
+PORT_DIMENTIONS = [0.993, 43.18]
 
 PORT_POINTS = [  # Given in inches as per the manual
     [19.625, 0, 0],
