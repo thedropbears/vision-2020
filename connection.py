@@ -23,7 +23,7 @@ class Connection:
             self.test = False
             self.using_nt = using_nt
             if self.using_nt:
-                #self.entries = entries
+                # self.entries = entries
                 self.init_NT_connection()
             else:
                 self.init_UDP_connection()
@@ -33,7 +33,7 @@ class Connection:
         NetworkTables.initialize(server=RIO_IP)
         NetworkTables.setUpdateRate(1)
         self.nt = NetworkTables.getTable("/vision")
-        #for i, entry in enumerate(self.entries):
+        # for i, entry in enumerate(self.entries):
         #   Replace entry strings with nt entries
         #    self.entries[i] = self.nt.getEntry(entry)
         self.entry = self.nt.getEntry("data")

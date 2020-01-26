@@ -33,7 +33,6 @@ class CameraManager:
             for prop in self.cameras[0].enumerateProperties():
                 print(prop.getName())
 
-
             self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
             self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
 
@@ -59,7 +58,7 @@ class CameraManager:
         """Takes a VideoSource, returns a CvSink"""
         camera = self.cs.startAutomaticCapture(name=config["name"], path=config["path"])
         camera.setConfigJson(json.dumps(config["config"]))
-        #print(camera.enumerateProperties())
+        # print(camera.enumerateProperties())
         return camera
 
     def get_frame(self, camera: int) -> tuple:

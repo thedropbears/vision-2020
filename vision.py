@@ -15,6 +15,7 @@ from magic_numbers import *
 import math
 import time
 
+
 class Vision:
     """Main vision class.
 
@@ -26,20 +27,31 @@ class Vision:
 
     entries = None
 
-    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False, zooming = False):
-        #self.entries = entries
+    def __init__(
+        self,
+        test_img=None,
+        test_video=None,
+        test_display=False,
+        using_nt=False,
+        zooming=False,
+    ):
+        # self.entries = entries
         # Memory Allocation
         self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
         self.mask = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT), dtype=np.uint8)
 
         # Camera Configuration
-        self.CameraManager = CameraManager(test_img=test_img, test_video=test_video, test_display=test_display)
+        self.CameraManager = CameraManager(
+            test_img=test_img, test_video=test_video, test_display=test_display
+        )
 
         self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
         self.zoom = 100
 
-        self.testing = not (type(test_img) == type(None) or type(test_video) == type(None))
+        self.testing = not (
+            type(test_img) == type(None) or type(test_video) == type(None)
+        )
         self.zoom = 100
         self.lastZoom = 100
         self.zooming = zooming
@@ -130,22 +142,27 @@ class Vision:
     def find_power_port(self, frame: np.ndarray):
         _, cnts, _ = cv2.findContours(frame, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         if len(cnts) >= 1:
-            largestCnt = max(cnts, key = lambda x:cv2.contourArea(x))
+            largestCnt = max(cnts, key=lambda x: cv2.contourArea(x))
             largestSize = cv2.contourArea(largestCnt)
-            x,y,w,h = cv2.boundingRect(largestCnt)
+            x, y, w, h = cv2.boundingRect(largestCnt)
             return (x, y, w, h)
         else:
             return None
 
-    def createAnnotatedDisplay(self, frame, results, printing = False):
-        frame = cv2.rectangle(frame, (results[0], results[1]), (results[0]+results[2], results[1]+results[3]), (255, 0 ,0))
+    def createAnnotatedDisplay(self, frame, results, printing=False):
+        frame = cv2.rectangle(
+            frame,
+            (results[0], results[1]),
+            (results[0] + results[2], results[1] + results[3]),
+            (255, 0, 0),
+        )
 
         if printing:
             print("distance ", end="")
             print(distance)
             print("angle ", end="")
             print(angle)
-            print("width ",end="")
+            print("width ", end="")
             print(results[2])
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
@@ -157,11 +174,17 @@ class Vision:
 
         results = self.find_power_port(self.mask)
         if results != None:
-            midX = results[0]+results[2]/2 #finds middle of target
-            angle = ((midX/FRAME_WIDTH)-0.5)*MAX_FOV_WIDTH*self.zoom/100#33.18 degrees #gets the angle
-            distance = PORT_DIMENTIONS[0]/math.tan((results[2]/FRAME_WIDTH)*(MAX_FOV_WIDTH/2))*(self.zoom/100) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
-            #this just uses a tan and then tries to correct itself
-            distance -= angle*1.9
+            midX = results[0] + results[2] / 2  # finds middle of target
+            angle = (
+                ((midX / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
+            )  # 33.18 degrees #gets the angle
+            distance = (
+                PORT_DIMENTIONS[0]
+                / math.tan((results[2] / FRAME_WIDTH) * (MAX_FOV_WIDTH / 2))
+                * (self.zoom / 100)
+            )  # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
+            # this just uses a tan and then tries to correct itself
+            distance -= angle * 1.9
             distance *= 0.6
             self.image = self.mask
 
@@ -183,34 +206,41 @@ class Vision:
             results = self.get_image_values(self.frame)
             if results != None:
                 self.createAnnotatedDisplay(self.image, results[0])
-                #print(results)
-                self.Connection.send_results((results[2], results[1], time.monotonic())) #distance (meters), angle (radians), timestamp
+                # print(results)
+                self.Connection.send_results(
+                    (results[2], results[1], time.monotonic())
+                )  # distance (meters), angle (radians), timestamp
 
-                if(self.zooming == True):
-	                self.lastZoom = self.zoom
-	                self.zoom = self.translate(abs(results[1]), 0.45, 0, 100, 200)
-	               	if abs(self.lastZoom - self.zoom) > 20:
-	               		self.CameraManager.setCameraProperty(0, "zoom_absolute", round(self.zoom))
+                if self.zooming == True:
+                    self.lastZoom = self.zoom
+                    self.zoom = self.translate(abs(results[1]), 0.45, 0, 100, 200)
+                    if abs(self.lastZoom - self.zoom) > 20:
+                        self.CameraManager.setCameraProperty(
+                            0, "zoom_absolute", round(self.zoom)
+                        )
                 print(results[2])
 
             self.CameraManager.send_frame(self.image)
 
-    def translate(self, value, leftMin, leftMax, rightMin, rightMax): #https://stackoverflow.com/questions/1969240/mapping-a-range-of-values-to-another
-	    # Figure out how 'wide' each range is
-	    leftSpan = leftMax - leftMin
-	    rightSpan = rightMax - rightMin
+    def translate(
+        self, value, leftMin, leftMax, rightMin, rightMax
+    ):  # https://stackoverflow.com/questions/1969240/mapping-a-range-of-values-to-another
+        # Figure out how 'wide' each range is
+        leftSpan = leftMax - leftMin
+        rightSpan = rightMax - rightMin
 
-	    # Convert the left range into a 0-1 range (float)
-	    valueScaled = float(value - leftMin) / float(leftSpan)
+        # Convert the left range into a 0-1 range (float)
+        valueScaled = float(value - leftMin) / float(leftSpan)
 
-	    # Convert the 0-1 range into a value in the right range.
-	    return rightMin + (valueScaled * rightSpan)
+        # Convert the 0-1 range into a value in the right range.
+        return rightMin + (valueScaled * rightSpan)
+
 
 if __name__ == "__main__":
-    #testImg = cv2.imread("tests/power_port/9m.PNG")
+    # testImg = cv2.imread("tests/power_port/9m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
 
-    camera_server = Vision(using_nt = True, zooming = False)
+    camera_server = Vision(using_nt=True, zooming=False)
     while True:
-    	camera_server.run()
+        camera_server.run()
