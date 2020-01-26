@@ -23,7 +23,7 @@ class Connection:
             self.test = False
             self.using_nt = using_nt
             if self.using_nt:
-                self.entries = entries
+                #self.entries = entries
                 self.init_NT_connection()
             else:
                 self.init_UDP_connection()
@@ -51,7 +51,7 @@ class Connection:
         if self.test:
             pass
         elif self.using_nt:
-            self.entry.setDoubleArray("data", results)
+            self.entry.setDoubleArray(results)
             NetworkTables.flush()
         else:
             self.sock_send.sendto(

@@ -26,7 +26,7 @@ class Vision:
 
     entries = None
 
-    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False):
+    def __init__(self, test_img=None, test_video=None, test_display=False, using_nt=False, zooming = False):
         #self.entries = entries
         # Memory Allocation
         self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
@@ -38,6 +38,11 @@ class Vision:
 
         self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
         self.zoom = 100
+
+        self.testing = not (type(test_img) == type(None) or type(test_video) == type(None))
+        self.zoom = 100
+        self.lastZoom = 100
+        self.zooming = zooming
 
     def find_polygon(self, contour: np.ndarray, n_points: int = 4):
         """Finds the polygon which most accurately matches the contour.
@@ -153,8 +158,8 @@ class Vision:
         results = self.find_power_port(self.mask)
         if results != None:
             midX = results[0]+results[2]/2 #finds middle of target
-            angle = ((midX/FRAME_WIDTH/2)-1)*MAX_FOV/2#33.18 degrees #gets the angle
-            distance = PORT_DIMENTIONS[0]/math.tan((results[2]/FRAME_WIDTH/2)*MAX_FOV/2) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
+            angle = ((midX/FRAME_WIDTH)-0.5)*MAX_FOV_WIDTH*self.zoom/100#33.18 degrees #gets the angle
+            distance = PORT_DIMENTIONS[0]/math.tan((results[2]/FRAME_WIDTH)*(MAX_FOV_WIDTH/2))*(self.zoom/100) # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
             #this just uses a tan and then tries to correct itself
             distance -= angle*1.9
             distance *= 0.6
@@ -178,18 +183,34 @@ class Vision:
             results = self.get_image_values(self.frame)
             if results != None:
                 self.createAnnotatedDisplay(self.image, results[0])
+                #print(results)
                 self.Connection.send_results((results[2], results[1], time.monotonic())) #distance (meters), angle (radians), timestamp
 
-                self.zoom = 200-results[1]
-                #self.CameraManager.setCameraProperty(0, "zoom", 100)
+                if(self.zooming == True):
+	                self.lastZoom = self.zoom
+	                self.zoom = self.translate(abs(results[1]), 0.45, 0, 100, 200)
+	               	if abs(self.lastZoom - self.zoom) > 20:
+	               		self.CameraManager.setCameraProperty(0, "zoom_absolute", round(self.zoom))
+                print(results[2])
+
             self.CameraManager.send_frame(self.image)
 
+    def translate(self, value, leftMin, leftMax, rightMin, rightMax): #https://stackoverflow.com/questions/1969240/mapping-a-range-of-values-to-another
+	    # Figure out how 'wide' each range is
+	    leftSpan = leftMax - leftMin
+	    rightSpan = rightMax - rightMin
+
+	    # Convert the left range into a 0-1 range (float)
+	    valueScaled = float(value - leftMin) / float(leftSpan)
+
+	    # Convert the 0-1 range into a value in the right range.
+	    return rightMin + (valueScaled * rightSpan)
 
 if __name__ == "__main__":
     #testImg = cv2.imread("tests/power_port/9m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
 
-    camera_server = Vision(using_nt = True)
+    camera_server = Vision(using_nt = True, zooming = False)
     while True:
-        camera_server.run()
+    	camera_server.run()

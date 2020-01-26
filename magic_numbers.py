@@ -12,12 +12,14 @@ SENSOR_HEIGHT = 3.6  # mm
 MAX_FOV_WIDTH = 1.158375#66.37
 MAX_FOV_HEIGHT = 0.91193453#52.25
 
+MAX_ZOOM = 200
+
 # Camera settings
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 
 # Recognition parameters. These should be variables that come from calibration.
-HSV_LOWER_BOUND = (60, 70, 15)
+HSV_LOWER_BOUND = (60, 50, 15)
 HSV_UPPER_BOUND = (90, 255, 255)
 
 # Target shape parameters
