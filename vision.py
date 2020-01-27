@@ -165,6 +165,22 @@ class Vision:
             print("width ", end="")
             print(results[2])
 
+    def get_angle(self, X):
+        return (
+            ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
+        )  # 33.18 degrees #gets the angle
+
+    def get_distance(self, width, angle):
+        distance = (
+            PORT_DIMENTIONS[0]
+            / math.tan((width / FRAME_WIDTH) * (MAX_FOV_WIDTH / 2))
+            * (self.zoom / 100)
+        )  # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
+        # this just uses a tan and then tries to correct itself
+        distance -= angle * 1.9
+        distance *= 0.6
+        return distance
+
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
@@ -175,17 +191,8 @@ class Vision:
         results = self.find_power_port(self.mask)
         if results != None:
             midX = results[0] + results[2] / 2  # finds middle of target
-            angle = (
-                ((midX / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
-            )  # 33.18 degrees #gets the angle
-            distance = (
-                PORT_DIMENTIONS[0]
-                / math.tan((results[2] / FRAME_WIDTH) * (MAX_FOV_WIDTH / 2))
-                * (self.zoom / 100)
-            )  # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
-            # this just uses a tan and then tries to correct itself
-            distance -= angle * 1.9
-            distance *= 0.6
+            angle = self.get_angle(midX)
+            distance = self.get_distance(results[2], angle)
             self.image = self.mask
 
             return (results, angle, distance)
@@ -197,6 +204,7 @@ class Vision:
         When ran, takes image, processes image, and sends results to RIO.
         """
         frame_time, self.frame = self.CameraManager.get_frame(0)
+        self.frame = cv2.flip(self.frame, 0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
             self.CameraManager.source.notifyError(
@@ -206,7 +214,6 @@ class Vision:
             results = self.get_image_values(self.frame)
             if results != None:
                 self.createAnnotatedDisplay(self.image, results[0])
-                # print(results)
                 self.Connection.send_results(
                     (results[2], results[1], time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
@@ -218,8 +225,7 @@ class Vision:
                         self.CameraManager.setCameraProperty(
                             0, "zoom_absolute", round(self.zoom)
                         )
-                print(results[2])
-
+                # print(results[2])
             self.CameraManager.send_frame(self.image)
 
     def translate(
