@@ -122,6 +122,7 @@ class Vision:
                     and box[2] > box[3]
                 ):
                     acceptable_cnts.append(current_contour[1])
+<<<<<<< HEAD
 
             if acceptable_cnts:
                 power_port_contour = max(
@@ -140,6 +141,19 @@ class Vision:
     ):
         for i in range(len(points)):
             cv2.circle(frame, (points[i][0][0], points[i][0][1]), 5, (0, 255, 0))
+=======
+            if acceptable_cnts:
+                power_port_contour = max(acceptable_cnts, key=cv2.contourArea)
+                power_port_points = self.find_polygon(power_port_contour)
+                # x, y, w, h = cv2.boundingRect(power_port_contour)
+                return power_port_contour, power_port_points
+        return None, None
+
+    def create_annotated_display(self, frame: np.ndarray, points: np.ndarray, printing=False):
+        for point in points:
+            print(point)
+            cv2.circle(frame, (point[0][0], points[0][1]), 5, (255, 255, 255))
+>>>>>>> fixed power port finder bugs
         if printing == True:
             print(points)
 
@@ -232,7 +246,7 @@ class Vision:
 
 if __name__ == "__main__":
     testImg = None
-    testImg = cv2.imread("tests/power_port/7m.PNG")
+    testImg = cv2.imread("tests/power_port/11m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
     if type(testImg) != type(None):
