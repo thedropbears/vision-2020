@@ -15,8 +15,6 @@ from magic_numbers import *
 import math
 import time
 
-import timeit
-
 
 class Vision:
     """Main vision class.
@@ -141,14 +139,19 @@ class Vision:
             )
         return (0.0, 0.0)
 
-    def find_power_port(self, frame: np.ndarray):
-        _, cnts, _ = cv2.findContours(frame, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    def find_power_port(self, frame: np.ndarray) -> tuple:
+        _, cnts, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(cnts) >= 1:
             acceptable_cnts = []
             for current_contour in enumerate(cnts):
                 area = cv2.contourArea(current_contour[1])
+                box = cv2.boundingRect(current_contour[1])
                 hull_area = cv2.contourArea(cv2.convexHull(current_contour[1]))
-                if area > MIN_CONTOUR_AREA and area / hull_area > 0.2:
+                if (
+                    area > MIN_CONTOUR_AREA
+                    and area / hull_area > 0.2
+                    and box[2] > box[3]
+                ):
                     acceptable_cnts.append(current_contour[1])
 
             power_port_contour = max(acceptable_cnts, key=lambda x: cv2.contourArea(x))
@@ -158,19 +161,19 @@ class Vision:
         else:
             return None
 
-    def create_annotated_display(self, frame, points, printing=False):
+    def create_annotated_display(self, frame: np.ndarray, points: np.ndarray, printing=False):
         for i in range(len(points)):
             cv2.circle(frame, (points[i][0][0], points[i][0][1]), 5, (0, 255, 0))
         if printing == True:
             print(points)
 
     # get_angle and get_distance will be replaced with solve pnp eventually
-    def get_angle(self, X):
+    def get_angle(self, X:float) -> float:
         return (
             ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
         )  # 33.18 degrees #gets the angle
 
-    def get_distance(self, contour, angle):
+    def get_distance(self, contour: np.ndarray, angle: float) -> float:
         box = cv2.boundingRect(contour)
         width = box[2]
         distance = (
@@ -183,7 +186,7 @@ class Vision:
         distance *= 0.6
         return distance
 
-    def get_middle(self, contour):
+    def get_middle(self, contour: np.ndarray) -> tuple:
         # https://www.pyimagesearch.com/2016/02/01/opencv-center-of-contour/
         M = cv2.moments(contour)
         cX = int(M["m10"] / M["m00"])
@@ -255,7 +258,7 @@ class Vision:
 
 if __name__ == "__main__":
     testImg = None
-    # testImg = cv2.imread("tests/power_port/7m.PNG")
+    testImg = cv2.imread("tests/power_port/7m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
     if type(testImg) != type(None):
