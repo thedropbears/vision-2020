@@ -14,10 +14,10 @@ class CameraManager:
         self.frame = None
         self.video = None
         self.test_display = test_display
-        if test_img:
+        if not type(test_img) == type(None):
             self.testing = True
             self.frame = test_img
-        elif test_video:
+        elif not type(test_video) == type(None):
             self.testing = True
             self.video = test_video
         else:
@@ -30,6 +30,8 @@ class CameraManager:
                 self.start_camera(camera_config)
                 for camera_config in self.camera_configs
             ]
+            for prop in self.cameras[0].enumerateProperties():
+                print(prop.getName())
 
             self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
             self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
@@ -56,6 +58,7 @@ class CameraManager:
         """Takes a VideoSource, returns a CvSink"""
         camera = self.cs.startAutomaticCapture(name=config["name"], path=config["path"])
         camera.setConfigJson(json.dumps(config["config"]))
+        # print(camera.enumerateProperties())
         return camera
 
     def get_frame(self, camera: int) -> tuple:
@@ -76,3 +79,6 @@ class CameraManager:
             cv2.waitKey(0)
         else:
             self.source.putFrame(frame)
+
+    def setCameraProperty(self, camera, property, value):
+        self.cameras[camera].getProperty(property).set(value)

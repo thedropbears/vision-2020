@@ -1,0 +1,5 @@
+unless otherwise labeled captured at 12 m back
+50 brightnes
+100 saturation
+exposure 1
+zoom 100 or 200

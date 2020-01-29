@@ -5,7 +5,7 @@ from vision import Vision
 
 class VisionTests(unittest.TestCase):
     def test_sample_images(self):
-        f = open("./tests/results.csv", "r")
+        f = open("./tests/power_port/results.csv", "r")
         lines = f.read().split("\n")
         f.close()
         for line in lines[1:]:
@@ -14,6 +14,7 @@ class VisionTests(unittest.TestCase):
             if results is not None:
                 for i in range(1, len(values)):
                     self.assertAlmostEqual(results[i - 1], float(values[i]))
+
 
 if __name__ == "__main__":
     camera_server = Vision(test=True)
