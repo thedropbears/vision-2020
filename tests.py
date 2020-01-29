@@ -15,6 +15,7 @@ class VisionTests(unittest.TestCase):
                 for i in range(1, len(values)):
                     self.assertAlmostEqual(results[i - 1], float(values[i]))
 
+
 if __name__ == "__main__":
     camera_server = Vision(test=True)
     unittest.main()

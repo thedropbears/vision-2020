@@ -17,6 +17,7 @@ import time
 
 import timeit
 
+
 class Vision:
     """Main vision class.
 
@@ -140,7 +141,6 @@ class Vision:
             )
         return (0.0, 0.0)
 
-
     def find_power_port(self, frame: np.ndarray):
         _, cnts, _ = cv2.findContours(frame, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         if len(cnts) >= 1:
@@ -148,12 +148,12 @@ class Vision:
             for current_contour in enumerate(cnts):
                 area = cv2.contourArea(current_contour[1])
                 hull_area = cv2.contourArea(cv2.convexHull(current_contour[1]))
-                if area > MIN_CONTOUR_AREA and area/hull_area > 0.2:
+                if area > MIN_CONTOUR_AREA and area / hull_area > 0.2:
                     acceptable_cnts.append(current_contour[1])
 
-            power_port_contour = max(acceptable_cnts, key = lambda x:cv2.contourArea(x))
+            power_port_contour = max(acceptable_cnts, key=lambda x: cv2.contourArea(x))
             power_port_points = self.find_polygon(power_port_contour)
-            #x, y, w, h = cv2.boundingRect(power_port_contour)
+            # x, y, w, h = cv2.boundingRect(power_port_contour)
             return power_port_contour, power_port_points
         else:
             return None
@@ -184,7 +184,7 @@ class Vision:
         return distance
 
     def get_middle(self, contour):
-        #https://www.pyimagesearch.com/2016/02/01/opencv-center-of-contour/
+        # https://www.pyimagesearch.com/2016/02/01/opencv-center-of-contour/
         M = cv2.moments(contour)
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
@@ -199,7 +199,7 @@ class Vision:
         power_port, points = self.find_power_port(self.mask)
         self.create_annotated_display(frame, points)
         if repr(power_port) != "None":
-            midX = self.get_middle(power_port)[0]# finds middle of target
+            midX = self.get_middle(power_port)[0]  # finds middle of target
             angle = self.get_angle(midX)
             distance = -self.get_distance(power_port, angle)
             self.image = self.mask
@@ -214,14 +214,14 @@ class Vision:
         When ran, takes image, processes image, and sends results to RIO.
         """
         frame_time, self.frame = self.CameraManager.get_frame(0)
-        #self.frame = cv2.flip(self.frame, 0)
+        # self.frame = cv2.flip(self.frame, 0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
             self.CameraManager.source.notifyError(
                 self.CameraManager.sinks[0].getError()
             )
         else:
-            
+
             results = self.get_image_values(self.frame)
             endTime = time.time()
             if results != None:
@@ -255,11 +255,11 @@ class Vision:
 
 if __name__ == "__main__":
     testImg = None
-    #testImg = cv2.imread("tests/power_port/7m.PNG")
+    # testImg = cv2.imread("tests/power_port/7m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
     if type(testImg) != type(None):
-        camera_server = Vision(test_img = testImg, test_display = True)
+        camera_server = Vision(test_img=testImg, test_display=True)
         camera_server.run()
     else:
         camera_server = Vision(using_nt=True, zooming=False)
