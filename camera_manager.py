@@ -31,7 +31,7 @@ class CameraManager:
                 for camera_config in self.camera_configs
             ]
             for prop in self.cameras[0].enumerateProperties():
-                print(prop.getName())
+                print(prop.getName(), prop.getKind())
 
             self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
             self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
@@ -45,6 +45,7 @@ class CameraManager:
         """
         with open(self.CONFIG_FILE_PATH) as json_file:
             j = json.load(json_file)
+            print(j)
 
         cameras = j["cameras"]
         cameras = [
