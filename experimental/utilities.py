@@ -25,6 +25,15 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
     lower = 0 * arclength
     depth = 15
     upper = 2 * arclength
+    
+    # The cv2.arcLength function gets the perimiter of a contour.
+    # The approxPolyDP function's second argument is a 'tolerance'.
+    # Sometimes when the tolerance is within a certain range,
+    # it will return a contour with the right number of sides,
+    # but not a good approximation. So we use the bisection method
+    # to get the lowest tolerance that still has the right number of
+    # sides. That is why we do it in two parts: one to get the required
+    # accuracy, and then another to ensure the right amount of sides.
 
     for _ in range(depth):
         current = (lower + upper) / 2
