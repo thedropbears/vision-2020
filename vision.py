@@ -48,6 +48,11 @@ class Vision:
 
         self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
 
+<<<<<<< HEAD
+=======
+        self.zoom = 100
+
+>>>>>>> moved ponging to connection class
         self.testing = not (
             type(test_img) == type(None) or type(test_video) == type(None)
         )
@@ -153,7 +158,11 @@ class Vision:
         return math.atan2(p - FRAME_HEIGHT, FY)
 
     # get_angle and get_distance will be replaced with solve pnp eventually
+<<<<<<< HEAD
     def get_horizontal_angle(self, X: float) -> float:
+=======
+    def get_angle(self, X: float) -> float:
+>>>>>>> moved ponging to connection class
         return (
             ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH
         )  # 33.18 degrees #gets the angle
@@ -204,11 +213,7 @@ class Vision:
         When ran, takes image, processes image, and sends results to RIO.
         """
         if Connection.using_nt:
-            self.ping_time = self.ping.getNumber(0)
-            if abs(self.ping_time - self.old_ping_time) > 0.00000001:
-                self.raspi_pong.setNumber(time.monotonic())
-                self.rio_pong.setNumber(self.ping_time)
-                self.old_ping_time = self.ping_time
+            Connection.pong()
         frame_time, self.frame = self.CameraManager.get_frame(0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
