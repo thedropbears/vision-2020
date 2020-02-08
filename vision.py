@@ -212,8 +212,8 @@ class Vision:
         """Main process function.
         When ran, takes image, processes image, and sends results to RIO.
         """
-        if Connection.using_nt:
-            Connection.pong()
+        if self.Connection.using_nt:
+            self.Connection.pong()
         frame_time, self.frame = self.CameraManager.get_frame(0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
