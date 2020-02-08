@@ -33,11 +33,14 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
             lower = current
         else:
             upper = current
-    while len(hull) != corner_number:
+
+    i = 0
+    while len(hull) != corner_number and i < 8:
         current = (lower + upper) / 2
         hull = cv2.convexHull(cv2.approxPolyDP(contour, current, True))
         if len(hull) > corner_number:
             lower = current
         else:
             upper = current
+        i += 1
     return hull
