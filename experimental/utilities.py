@@ -23,9 +23,9 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
 
     arclength = cv2.arcLength(contour, True)
     lower = 0 * arclength
-    depth = 15
+    depth = 8
     upper = 2 * arclength
-    
+
     # The cv2.arcLength function gets the perimiter of a contour.
     # The approxPolyDP function's second argument is a 'tolerance'.
     # Sometimes when the tolerance is within a certain range,
