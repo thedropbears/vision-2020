@@ -210,8 +210,7 @@ class Vision:
                 self.CameraManager.sinks[0].getError()
             )
         else:
-            self.frame = cv2.flip(self.frame, -1)
-            # -1 means flip in both ways (or rotate 180 degrees).
+            self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
             results = self.get_image_values(self.frame)
             if results is not None:
                 distance, angle = results
