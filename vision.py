@@ -212,7 +212,7 @@ class Vision:
                 self.CameraManager.sinks[0].getError()
             )
         else:
-
+            self.frame = cv2.flip(self.frame, -1)
             results = self.get_image_values(self.frame)
             endTime = time.time()
             if results != None:
