@@ -1,5 +1,5 @@
 import numpy as np
-
+import math
 
 # Magic Numbers:
 
@@ -55,3 +55,7 @@ INTR_MATRIX = np.array(
     [[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]], dtype=np.float32
 )
 DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
+
+CAMERA_HEIGHT = 1
+TARGET_HEIGHT = 2.5
+GROUND_ANGLE = math.radians(20)
