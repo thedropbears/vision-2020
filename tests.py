@@ -2,7 +2,7 @@ import unittest
 import cv2
 import numpy as np
 from vision import Vision
-from experimental.utilities import get_corners_from_contour
+from utilities.functions import get_corners_from_contour
 
 
 class VisionTests(unittest.TestCase):
