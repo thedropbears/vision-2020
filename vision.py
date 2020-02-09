@@ -215,13 +215,14 @@ class Vision:
             self.frame = cv2.flip(self.frame, -1)
             results = self.get_image_values(self.frame)
             if results is not None:
+                distance, angle = results
                 self.Connection.send_results(
-                    (results[2], results[1], time.monotonic())
+                    (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
 
                 if self.zooming == True:
                     self.lastZoom = self.zoom
-                    self.zoom = self.translate(abs(results[1]), 0.45, 0, 100, 200)
+                    self.zoom = self.translate(abs(angle), 0.45, 0, 100, 200)
                     if abs(self.lastZoom - self.zoom) > 20:
                         self.CameraManager.setCameraProperty(
                             0, "zoom_absolute", round(self.zoom)
