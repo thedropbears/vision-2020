@@ -209,7 +209,6 @@ class Vision:
         When ran, takes image, processes image, and sends results to RIO.
         """
         frame_time, self.frame = self.CameraManager.get_frame(0)
-        # self.frame = cv2.flip(self.frame, 0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
             self.CameraManager.source.notifyError(
@@ -217,6 +216,7 @@ class Vision:
             )
         else:
             self.frame = cv2.flip(self.frame, -1)
+            # -1 means flip in both ways (or rotate 180 degrees).
             results = self.get_image_values(self.frame)
             if results is not None:
                 distance, angle = results
