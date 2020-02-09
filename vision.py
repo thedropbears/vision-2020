@@ -139,7 +139,9 @@ class Vision:
         else:
             return None
 
-    def create_annotated_display(self, frame: np.ndarray, points: np.ndarray, printing=False):
+    def create_annotated_display(
+        self, frame: np.ndarray, points: np.ndarray, printing=False
+    ):
         for i in range(len(points)):
             cv2.circle(frame, (points[i][0][0], points[i][0][1]), 5, (0, 255, 0))
         if printing == True:
