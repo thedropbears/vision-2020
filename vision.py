@@ -139,8 +139,8 @@ class Vision:
                 power_port_points = get_corners_from_contour(power_port_contour)
             # x, y, w, h = cv2.boundingRect(power_port_contour)
                 return power_port_points
-        else:
-            return None
+            else:
+                return None
         else:
             return None
 
