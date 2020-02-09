@@ -7,6 +7,7 @@ PI_IP = "10.47.74.6"
 RIO_IP = "10.47.74.2"
 UDP_RECV_PORT = 5005
 UDP_SEND_PORT = 5006
+TIME_TO_PONG = 0.00000001
 
 
 class Connection:
@@ -66,7 +67,6 @@ class Connection:
 
     def pong(self) -> None:
         self.ping_time = self.ping.getNumber(0)
-        if abs(self.ping_time - self.old_ping_time) > 0.00000001:
-            self.raspi_pong.setNumber(time.monotonic())
+        if abs(self.ping_time - self.old_ping_time) > TIME_TO_PONG:
             self.rio_pong.setNumber(self.ping_time)
             self.old_ping_time = self.ping_time
