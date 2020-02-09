@@ -169,13 +169,14 @@ class Vision:
         return (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
 
     def get_middles(self, contour: np.ndarray) -> tuple:
-        """ Use the cv2 moments to find the centre x and y of the contour. """
+        """ Use the cv2 moments to find the centre x of the contour.
+        We just copied it from the opencv reference. The y is just the lowest
+        pixel in the image."""
         M = cv2.moments(contour)
         if M["m00"] != 0:
-        cX = int(M["m10"] / M["m00"])
+            cX = int(M["m10"] / M["m00"])
         else:
             cX = 160
-        # cY = int(M["m01"] / M["m00"])
         cY = max(list(contour[:, :, 1]))
         return cX, cY
 
