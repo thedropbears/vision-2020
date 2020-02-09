@@ -14,6 +14,7 @@ from camera_manager import CameraManager
 from magic_numbers import *
 import math
 import time
+from utilities.functions import get_corners_from_contour
 
 
 class Vision:
@@ -55,30 +56,7 @@ class Vision:
         self.zoom = 100
         self.lastZoom = 100
         self.zooming = zooming
-
-    def find_polygon(self, contour: np.ndarray, n_points: int = 4):
-        """Finds the polygon which most accurately matches the contour.
-
-        Args:
-            contour (np.ndarray): Should be a numpy array of the contour with shape (1, n, 2).
-            n_points (int): Designates the number of corners which the polygon should have.
-
-        Returns:
-            np.ndarray: A list of points representing the polygon's corners.
-        """
-        coefficient = CONTOUR_COEFFICIENT
-        for _ in range(20):
-            epsilon = coefficient * cv2.arcLength(contour, True)
-            poly_approx = cv2.approxPolyDP(contour, epsilon, True)
-            hull = cv2.convexHull(poly_approx)
-            if len(hull) == n_points:
-                return hull
-            if len(hull) > n_points:
-                coefficient += 0.01
-            else:
-                coefficient -= 0.01
-        return None
-
+        
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
             self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
@@ -91,13 +69,13 @@ class Vision:
         for i, cnt in enumerate(cnts):
             if hierarchy[i][3] == -1:
                 outer_rects[i] = (
-                    self.find_polygon(cnt),
+                    get_corners_from_contour(cnt),
                     hierarchy[i],
                     cv2.contourArea(cnt),
                 )
             else:
                 inner_rects[i] = (
-                    self.find_polygon(cnt),
+                    get_corners_from_contour(cnt),
                     hierarchy[i],
                     cv2.contourArea(cnt),
                 )
