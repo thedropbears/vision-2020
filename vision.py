@@ -171,8 +171,12 @@ class Vision:
     def get_middles(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x and y of the contour. """
         M = cv2.moments(contour)
+        if M["m00"] != 0:
         cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
+        else:
+            cX = 160
+        # cY = int(M["m01"] / M["m00"])
+        cY = max(list(contour[:, :, 1]))
         return cX, cY
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
