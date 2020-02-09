@@ -214,8 +214,7 @@ class Vision:
         else:
             self.frame = cv2.flip(self.frame, -1)
             results = self.get_image_values(self.frame)
-            endTime = time.time()
-            if results != None:
+            if results is not None:
                 self.Connection.send_results(
                     (results[2], results[1], time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
