@@ -56,6 +56,6 @@ INTR_MATRIX = np.array(
 )
 DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
 
-CAMERA_HEIGHT = 1
-TARGET_HEIGHT = 2.5
+CAMERA_HEIGHT = 0.66
+TARGET_HEIGHT = 2.04
 GROUND_ANGLE = math.radians(20)
