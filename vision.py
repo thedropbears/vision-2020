@@ -34,7 +34,6 @@ class Vision:
         test_video=None,
         test_display=False,
         using_nt=False,
-        zooming=False,
     ):
         # self.entries = entries
         # Memory Allocation
@@ -48,14 +47,10 @@ class Vision:
         )
 
         self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
-        self.zoom = 100
 
         self.testing = not (
             type(test_img) == type(None) or type(test_video) == type(None)
         )
-        self.zoom = 100
-        self.lastZoom = 100
-        self.zooming = zooming
         
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
@@ -160,7 +155,7 @@ class Vision:
     # get_angle and get_distance will be replaced with solve pnp eventually
     def get_horizontal_angle(self, X: float) -> float:
         return (
-            ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
+            ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH
         )  # 33.18 degrees #gets the angle
 
     def get_distance(self, Y: float) -> float:
@@ -223,15 +218,6 @@ class Vision:
                 self.Connection.send_results(
                     (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
-
-                if self.zooming == True:
-                    self.lastZoom = self.zoom
-                    self.zoom = self.translate(abs(angle), 0.45, 0, 100, 200)
-                    if abs(self.lastZoom - self.zoom) > 20:
-                        self.CameraManager.setCameraProperty(
-                            0, "zoom_absolute", round(self.zoom)
-                        )
-                # print(results[2])
             self.CameraManager.send_frame(self.image)
 
     def translate(
@@ -257,6 +243,6 @@ if __name__ == "__main__":
         camera_server = Vision(test_img=testImg, test_display=True)
         camera_server.run()
     else:
-        camera_server = Vision(using_nt=True, zooming=False)
+        camera_server = Vision(using_nt=True)
         while True:
             camera_server.run()
