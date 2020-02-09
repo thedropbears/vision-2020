@@ -29,11 +29,7 @@ class Vision:
     entries = None
 
     def __init__(
-        self,
-        test_img=None,
-        test_video=None,
-        test_display=False,
-        using_nt=False,
+        self, test_img=None, test_video=None, test_display=False, using_nt=False,
     ):
         # self.entries = entries
         # Memory Allocation
@@ -51,7 +47,7 @@ class Vision:
         self.testing = not (
             type(test_img) == type(None) or type(test_video) == type(None)
         )
-        
+
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
             self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
@@ -132,7 +128,7 @@ class Vision:
                     acceptable_cnts, key=lambda x: cv2.contourArea(x)
                 )
                 power_port_points = get_corners_from_contour(power_port_contour)
-            # x, y, w, h = cv2.boundingRect(power_port_contour)
+                # x, y, w, h = cv2.boundingRect(power_port_contour)
                 return power_port_points
             else:
                 return None
@@ -155,8 +151,8 @@ class Vision:
     # get_angle and get_distance will be replaced with solve pnp eventually
     def get_horizontal_angle(self, X: float) -> float:
         return (
-            ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH
-        )  # 33.18 degrees #gets the angle
+            (X / FRAME_WIDTH) - 0.5
+        ) * MAX_FOV_WIDTH  # 33.18 degrees #gets the angle
 
     def get_distance(self, Y: float) -> float:
         target_angle = self.get_vertical_angle(Y)
@@ -185,7 +181,6 @@ class Vision:
         self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
         self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
 
-
         power_port = self.find_power_port(self.mask)
         self.image = self.mask
 
@@ -203,6 +198,8 @@ class Vision:
         """Main process function.
         When ran, takes image, processes image, and sends results to RIO.
         """
+        if self.Connection.using_nt:
+            self.Connection.pong()
         frame_time, self.frame = self.CameraManager.get_frame(0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
