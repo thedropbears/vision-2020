@@ -48,11 +48,6 @@ class Vision:
 
         self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
 
-<<<<<<< HEAD
-=======
-        self.zoom = 100
-
->>>>>>> moved ponging to connection class
         self.testing = not (
             type(test_img) == type(None) or type(test_video) == type(None)
         )
@@ -158,11 +153,7 @@ class Vision:
         return math.atan2(p - FRAME_HEIGHT, FY)
 
     # get_angle and get_distance will be replaced with solve pnp eventually
-<<<<<<< HEAD
     def get_horizontal_angle(self, X: float) -> float:
-=======
-    def get_angle(self, X: float) -> float:
->>>>>>> moved ponging to connection class
         return (
             ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH
         )  # 33.18 degrees #gets the angle
