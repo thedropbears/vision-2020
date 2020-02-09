@@ -132,10 +132,15 @@ class Vision:
                 ):
                     acceptable_cnts.append(current_contour[1])
 
-            power_port_contour = max(acceptable_cnts, key=lambda x: cv2.contourArea(x))
-            power_port_points = self.find_polygon(power_port_contour)
+            if acceptable_cnts:
+                power_port_contour = max(
+                    acceptable_cnts, key=lambda x: cv2.contourArea(x)
+                )
+                power_port_points = get_corners_from_contour(power_port_contour)
             # x, y, w, h = cv2.boundingRect(power_port_contour)
-            return power_port_contour, power_port_points
+                return power_port_points
+        else:
+            return None
         else:
             return None
 
