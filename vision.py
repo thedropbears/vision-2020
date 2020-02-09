@@ -169,8 +169,8 @@ class Vision:
         distance *= 0.6
         return distance
 
-    def get_middle(self, contour: np.ndarray) -> tuple:
-        # https://www.pyimagesearch.com/2016/02/01/opencv-center-of-contour/
+    def get_middles(self, contour: np.ndarray) -> tuple:
+        """ Use the cv2 moments to find the centre x and y of the contour. """
         M = cv2.moments(contour)
         cX = int(M["m10"] / M["m00"])
         cY = int(M["m01"] / M["m00"])
