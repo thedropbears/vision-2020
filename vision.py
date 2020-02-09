@@ -163,18 +163,10 @@ class Vision:
             ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
         )  # 33.18 degrees #gets the angle
 
-    def get_distance(self, contour: np.ndarray, angle: float) -> float:
-        box = cv2.boundingRect(contour)
-        width = box[2]
-        distance = (
-            PORT_DIMENTIONS[0]
-            / math.tan((width / FRAME_WIDTH) * (MAX_FOV_WIDTH / 2))
-            * (self.zoom / 100)
-        )  # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
-        # this just uses a tan and then tries to correct itself
-        distance -= angle * 1.9
-        distance *= 0.6
-        return distance
+    def get_distance(self, Y: float) -> float:
+        target_angle = self.get_vertical_angle(Y)
+        # print(f"Total Angle: {math.degrees(target_angle + GROUND_ANGLE)}")
+        return (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
 
     def get_middles(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x and y of the contour. """
