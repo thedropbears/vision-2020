@@ -145,6 +145,11 @@ class Vision:
         if printing == True:
             print(points)
 
+    def get_vertical_angle(self, p: int):
+        """Gets angle of point p above the horizontal.
+        Parameter p should have 0 at the bottom of the frame and FRAME_HEIGHT at the top. """
+        return math.atan2(p - FRAME_HEIGHT, FY)
+
     # get_angle and get_distance will be replaced with solve pnp eventually
     def get_angle(self, X:float) -> float:
         return (
