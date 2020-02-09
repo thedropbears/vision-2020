@@ -17,6 +17,7 @@ class VisionTests(unittest.TestCase):
                 for i in range(1, len(values)):
                     self.assertAlmostEqual(results[i - 1], float(values[i]))
 
+
 class UtilitiesTests(unittest.TestCase):
     TEST_INPUTS = np.array(
         [
