@@ -182,15 +182,20 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
-        power_port, points = self.find_power_port(self.mask)
-        self.create_annotated_display(frame, points)
-        if repr(power_port) != "None":
-            midX = self.get_middle(power_port)[0]  # finds middle of target
-            angle = self.get_angle(midX)
-            distance = -self.get_distance(power_port, angle)
-            self.image = self.mask
-            print(angle, distance)
-            return (power_port, -angle, distance)
+        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+        self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
+        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+
+
+        power_port = self.find_power_port(self.mask)
+        self.image = self.mask
+
+        if power_port is not None:
+            self.create_annotated_display(frame, power_port)
+            midX, midY = self.get_middles(power_port)
+            angle = self.get_horizontal_angle(midX)
+            distance = self.get_distance(midY)
+            return (distance, angle)
         else:
             return None
 
