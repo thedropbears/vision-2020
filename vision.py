@@ -151,7 +151,7 @@ class Vision:
         return math.atan2(p - FRAME_HEIGHT, FY)
 
     # get_angle and get_distance will be replaced with solve pnp eventually
-    def get_angle(self, X:float) -> float:
+    def get_horizontal_angle(self, X: float) -> float:
         return (
             ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
         )  # 33.18 degrees #gets the angle
