@@ -254,14 +254,21 @@ class Vision:
 
 
 if __name__ == "__main__":
-    testImg = None
-    # testImg = cv2.imread("tests/power_port/11m.PNG")
+    sampleImgs = False
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
-    if type(testImg) != type(None):
-        camera_server = Vision(test_img=testImg, test_display=True)
-        camera_server.run()
+    if sampleImgs:
+        import os
+
+        testImgs = os.listdir("tests/power_port/")
+
+        for im in testImgs:
+            print(im.split("m")[0] + "\t", end="")
+            camera_server = Vision(
+                test_img=cv2.imread("tests/power_port/" + im), test_display=True
+            )
+            camera_server.run()
     else:
-        camera_server = Vision(using_nt=True)
+        camera_server = Vision(using_nt=True, zooming=False)
         while True:
             camera_server.run()
