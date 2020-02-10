@@ -42,15 +42,12 @@ class Vision:
             test_img=test_img, test_video=test_video, test_display=test_display
         )
 
-
         self.CameraManager.setCameraProperty(0, "white_balance_temperature_auto", 0)
         self.CameraManager.setCameraProperty(0, "exposure_auto", 1)
-        #self.CameraManager.setCameraProperty(0, "exposure_auto_priority", 0)
+        # self.CameraManager.setCameraProperty(0, "exposure_auto_priority", 0)
         self.CameraManager.setCameraProperty(0, "focus_auto", 0)
         self.CameraManager.setCameraProperty(0, "exposure_absolute", 1)
-        #self.CameraManager.setCameraProperty(0, "raw_exposure_absolute", 1)
-        
-
+        # self.CameraManager.setCameraProperty(0, "raw_exposure_absolute", 1)
 
         self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
 
@@ -160,16 +157,10 @@ class Vision:
 
     # get_angle and get_distance will be replaced with solve pnp eventually
     def get_horizontal_angle(self, X: float) -> float:
-<<<<<<< HEAD
-        return (
-            (X / FRAME_WIDTH) - 0.5
-        ) * MAX_FOV_WIDTH  # 33.18 degrees #gets the angle
-=======
         return -(
             ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH
         )  # 33.18 degrees #gets the angle
-        #negtive to make the angle same as the robot
->>>>>>> lowered magic number and inverted angle
+        # negtive to make the angle same as the robot
 
     def get_distance(self, y: int, h: int) -> float:
         # box = cv2.boundingRect(contour)
@@ -183,8 +174,10 @@ class Vision:
         distance2 = h
         distance2 = self.translate(distance2, 45, 18, 3, 11)
 
-        combined_dist = (distance2+distance)/2
-        ajusted_dist = 5.21+-1.15*combined_dist+0.145*combined_dist**2 #gotten from google sheets
+        combined_dist = (distance2 + distance) / 2
+        ajusted_dist = (
+            5.21 + -1.15 * combined_dist + 0.145 * combined_dist ** 2
+        )  # gotten from google sheets
         return ajusted_dist
 
     def get_middles(self, contour: np.ndarray) -> tuple:
@@ -262,7 +255,7 @@ class Vision:
 
 if __name__ == "__main__":
     testImg = None
-    #testImg = cv2.imread("tests/power_port/11m.PNG")
+    # testImg = cv2.imread("tests/power_port/11m.PNG")
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
     if type(testImg) != type(None):
