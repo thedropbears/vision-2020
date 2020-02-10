@@ -269,6 +269,6 @@ if __name__ == "__main__":
             )
             camera_server.run()
     else:
-        camera_server = Vision(using_nt=True, zooming=False)
+        camera_server = Vision(using_nt=True)
         while True:
             camera_server.run()
