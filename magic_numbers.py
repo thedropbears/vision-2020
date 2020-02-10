@@ -42,7 +42,7 @@ PORT_POINTS = np.array(  # Converted to mm
     [(2.54 * i[0], 2.54 * i[1], 0) for i in PORT_POINTS], np.float32
 ).reshape((4, 1, 3))
 
-MIN_CONTOUR_AREA = 80
+MIN_CONTOUR_AREA = 40
 CONTOUR_COEFFICIENT = 0.05
 INNER_OUTER_RATIO = 3.62
 RECT_AREA_RATIO = 0.2
