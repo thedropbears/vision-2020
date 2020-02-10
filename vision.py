@@ -154,27 +154,36 @@ class Vision:
     ):
         for i in range(len(points)):
             cv2.circle(frame, (points[i][0][0], points[i][0][1]), 5, (0, 255, 0))
-        for point in points:
-            print(point)
-            cv2.circle(frame, (point[0][0], points[0][1]), 5, (255, 255, 255))
         if printing == True:
             print(points)
 
     def get_vertical_angle(self, p: int):
         """Gets angle of point p above the horizontal.
-        Parameter p should have 0 at the bottom of the frame and FRAME_HEIGHT at the top. """
+        Parameter p should have 0 at the top of the frame and FRAME_HEIGHT at the bottom. """
         return math.atan2(p - FRAME_HEIGHT, FY)
 
     # get_angle and get_distance will be replaced with solve pnp eventually
     def get_horizontal_angle(self, X: float) -> float:
-        return (
+        return -(
             ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH
         )  # 33.18 degrees #gets the angle
+        #negtive to make the angle same as the robot
 
-    def get_distance(self, Y: float) -> float:
-        target_angle = self.get_vertical_angle(Y)
-        # print(f"Total Angle: {math.degrees(target_angle + GROUND_ANGLE)}")
-        return (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
+    def get_distance(self, y: int, h: int) -> float:
+        # box = cv2.boundingRect(contour)
+        # target_angle = self.get_vertical_angle(box[1]+box[3]/2)
+        target_angle = (
+            (y / FRAME_HEIGHT)
+        ) * MAX_FOV_HEIGHT  # vertical angle of the target from the center of the camera
+        distance = (2.5 - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
+        distance = self.translate(distance, 1.7, 0.65, 3, 11)
+
+        distance2 = h
+        distance2 = self.translate(distance2, 45, 18, 3, 11)
+
+        combined_dist = (distance2+distance)/2
+        ajusted_dist = 5.21+-1.15*combined_dist+0.145*combined_dist**2 #gotten from google sheets
+        return ajusted_dist
 
     def get_middles(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
@@ -205,8 +214,10 @@ class Vision:
         if power_port is not None:
             self.create_annotated_display(frame, power_port)
             midX, midY = self.get_middles(power_port)
+            box_height = cv2.boundingRect(power_port)[3]
             angle = self.get_horizontal_angle(midX)
-            distance = self.get_distance(midY)
+            distance = self.get_distance(midY, box_height)
+            print(distance)
             return (distance, angle)
         else:
             return None
