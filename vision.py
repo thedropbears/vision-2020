@@ -175,10 +175,10 @@ class Vision:
         distance2 = self.translate(distance2, 45, 18, 3, 11)
 
         combined_dist = (distance2 + distance) / 2
-        ajusted_dist = (
+        adjusted_dist = (
             5.21 + -1.15 * combined_dist + 0.145 * combined_dist ** 2
         )  # gotten from google sheets
-        return ajusted_dist
+        return adjusted_dist
 
     def get_middles(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
@@ -198,9 +198,9 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
-        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
-        self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
-        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+        # self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+        # self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
+        # self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
 
         power_port = self.find_power_port(self.mask)
         self.image = self.mask
