@@ -150,17 +150,17 @@ class Vision:
         if printing == True:
             print(points)
 
+    # Both get_angle functions translate origin from top-left to centre.
     def get_vertical_angle(self, p: int):
         """Gets angle of point p above the horizontal.
         Parameter p should have 0 at the top of the frame and FRAME_HEIGHT at the bottom. """
         return math.atan2(FRAME_HEIGHT / 2 - p, FY)
+        # Opposite direction from pixel space: up is positive
 
     # get_angle and get_distance will be replaced with solve pnp eventually
     def get_horizontal_angle(self, X: float) -> float:
-        return -(
-            ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH
-        )  # 33.18 degrees #gets the angle
-        # negtive to make the angle same as the robot
+        return math.atan2(x - FRAME_WIDTH / 2, FX)
+         # Same direction as pixel space: right is positive
 
     def get_distance(self, y: int, h: int) -> float:
         # box = cv2.boundingRect(contour)
