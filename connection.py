@@ -69,4 +69,5 @@ class Connection:
         self.ping_time = self.ping.getNumber(0)
         if abs(self.ping_time - self.old_ping_time) > TIME_TO_PONG:
             self.rio_pong.setNumber(self.ping_time)
+            self.raspi_pong.setNumber(time.monotonic)
             self.old_ping_time = self.ping_time
