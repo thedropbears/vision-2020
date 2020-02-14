@@ -138,3 +138,18 @@ def get_horizontal_angle(x: int, intr_matrix: np.ndarray, inverted=False) -> flo
         return math.atan2(x - intr_matrix[0][2], intr_matrix[0][0])
 
 
+def get_distance(
+    target_angle: float, target_height: float, camera_height: float, camera_tilt: float
+) -> None:
+    """Gets the ground distance from the camera to the target.
+
+    Args:
+        target_angle: The angle of the point below the centre plane of the camera. 
+            Downwards is positive, as returned by get_vertical_angle()'s default.
+        target_height: The height of the target above the ground (in metres)
+        camera_height: The height of the camera above the ground (in metres)
+        camera_tilt: The camera's angle of elevation from the ground (upwards is positive)
+    Returns:
+        A positive perpendicular distance to the target along the ground (in metres)
+    """
+    return (target_height - camera_height) / math.tan(camera_tilt - target_angle)
