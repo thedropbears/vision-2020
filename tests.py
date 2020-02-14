@@ -1,6 +1,8 @@
 import unittest
 import cv2
 import numpy as np
+
+from connection import DummyConnection
 from vision import Vision
 from utilities.functions import get_corners_from_contour
 
@@ -73,5 +75,5 @@ class UtilitiesTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    camera_server = Vision(test=True)
+    camera_server = Vision(DummyConnection())
     unittest.main()

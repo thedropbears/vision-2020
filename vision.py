@@ -9,7 +9,7 @@ It can be found at https://github.com/thedropbears/vision-2020
 import sys
 import cv2
 import numpy as np
-from connection import Connection
+from connection import Connection, DummyConnection, NTConnection
 from camera_manager import CameraManager
 from magic_numbers import *
 import math
@@ -26,12 +26,13 @@ class Vision:
     the only tests that can be done without a Pi running the FRC vision image.
     """
 
-    entries = None
-
     def __init__(
-        self, test_img=None, test_video=None, test_display=False, using_nt=False,
+        self,
+        connection: Connection,
+        test_img=None,
+        test_video=None,
+        test_display=False,
     ):
-        # self.entries = entries
         # Memory Allocation
         self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
@@ -42,7 +43,7 @@ class Vision:
             test_img=test_img, test_video=test_video, test_display=test_display
         )
 
-        self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
+        self.connection = connection
 
         self.testing = not (
             type(test_img) == type(None) or type(test_video) == type(None)
@@ -230,15 +231,18 @@ class Vision:
         return rightMin + (valueScaled * rightSpan)
 
 
-if __name__ == "__main__":
-    testImg = None
-    testImg = cv2.imread("tests/power_port/7m.PNG")
-    # These imports are here so that one does not have to install cscore
-    # (a somewhat difficult project on Windows) to run tests.
-    if type(testImg) != type(None):
-        camera_server = Vision(test_img=testImg, test_display=True)
-        camera_server.run()
+def main():
+    test_img = cv2.imread("tests/power_port/7m.PNG")
+    if test_img is not None:
+        vision = Vision(
+            connection=DummyConnection(), test_img=test_img, test_display=True
+        )
+        vision.run()
     else:
-        camera_server = Vision(using_nt=True)
+        vision = Vision(connection=NTConnection())
         while True:
-            camera_server.run()
+            vision.run()
+
+
+if __name__ == "__main__":
+    main()
