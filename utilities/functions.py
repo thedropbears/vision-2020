@@ -92,7 +92,7 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
 
 
 # The next two functions' `x` and `y` arguments are in camera coordinates.
-# The origin is the top left corner of the screen, with left and down being positive.
+# The origin is the top left corner of the screen, with right and down being positive.
 
 # Both have an `invert` argument which, if False, leaves the return angle with negative
 # at the origin, and if True, has positive at the origin.
