@@ -29,7 +29,7 @@ class Vision:
     entries = None
 
     def __init__(
-        self, test_img=None, test_video=None, test_display=False, using_nt=False,
+        self, test_img=[], test_video=[], test_display=False, using_nt=False,
     ):
         # self.entries = entries
         # Memory Allocation
@@ -41,12 +41,14 @@ class Vision:
         self.CameraManager = CameraManager(
             test_img=test_img, test_video=test_video, test_display=test_display
         )
+        self.testing = len(test_video) or len(test_img)
+        if not self.testing:
+            self.CameraManager.setCameraProperty(0, "white_balance_temperature_auto", 0)
+            self.CameraManager.setCameraProperty(0, "exposure_auto", 1)
+            self.CameraManager.setCameraProperty(0, "focus_auto", 0)
+            self.CameraManager.setCameraProperty(0, "exposure_absolute", 1)
 
-        self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
-
-        self.testing = not (
-            type(test_img) == type(None) or type(test_video) == type(None)
-        )
+        self.Connection = Connection(using_nt=using_nt, test=self.testing)
 
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
@@ -84,13 +86,13 @@ class Vision:
                     next_child = inner_rects[next_child][1][0]
                 largest = max(current_inners, key=lambda x: x[2])
                 if (
-                    abs((outer_rects[i][2] / largest[2]) - INNER_OUTER_RATIO) < 0.5
+                    abs((outer_rects[i][2] / largest[2]) - LOADING_INNER_OUTER_RATIO) < 0.5
                     and abs(
                         (cv2.contourArea(outer_rects[i][0]) / outer_rects[i][2]) - 1
                     )
-                    < RECT_AREA_RATIO
+                    < LOADING_RECT_AREA_RATIO
                     and abs((cv2.contourArea(largest[0]) / largest[2]) - 1)
-                    < RECT_AREA_RATIO
+                    < LOADING_RECT_AREA_RATIO
                 ):
                     good.append((outer_rects[i], largest))
 
@@ -118,7 +120,7 @@ class Vision:
                 hull_area = cv2.contourArea(cv2.convexHull(current_contour[1]))
                 if (
                     area > MIN_CONTOUR_AREA
-                    and area / hull_area > 0.2
+                    and area / hull_area > POWER_PORT_AREA_RATIO
                     and box[2] > box[3]
                 ):
                     acceptable_cnts.append(current_contour[1])
@@ -143,21 +145,23 @@ class Vision:
         if printing == True:
             print(points)
 
+    # Both get_angle functions translate origin from top-left to centre.
     def get_vertical_angle(self, p: int):
         """Gets angle of point p above the horizontal.
-        Parameter p should have 0 at the bottom of the frame and FRAME_HEIGHT at the top. """
-        return math.atan2(p - FRAME_HEIGHT, FY)
+        Parameter p should have 0 at the top of the frame and FRAME_HEIGHT at the bottom. """
+        return math.atan2(FRAME_HEIGHT / 2 - p, FY)
+        # Opposite direction from pixel space: up is positive
 
     # get_angle and get_distance will be replaced with solve pnp eventually
-    def get_horizontal_angle(self, X: float) -> float:
-        return (
-            (X / FRAME_WIDTH) - 0.5
-        ) * MAX_FOV_WIDTH  # 33.18 degrees #gets the angle
+    def get_horizontal_angle(self, x : float) -> float:
+        return math.atan2(x - FRAME_WIDTH / 2, FX)
+         # Same direction as pixel space: right is positive
 
-    def get_distance(self, Y: float) -> float:
-        target_angle = self.get_vertical_angle(Y)
-        # print(f"Total Angle: {math.degrees(target_angle + GROUND_ANGLE)}")
-        return (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
+    def get_distance(self, y: int, h: int) -> float:
+        #y is the y position in px of the bottom of the target, h is the height of the box of the target
+        target_angle = self.get_vertical_angle(y)
+        distance = (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
+        return distance
 
     def get_middles(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
@@ -177,9 +181,9 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
-        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
-        self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
-        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+        # self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+        # self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
+        # self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
 
         power_port = self.find_power_port(self.mask)
         self.image = self.mask
@@ -187,8 +191,10 @@ class Vision:
         if power_port is not None:
             self.create_annotated_display(frame, power_port)
             midX, midY = self.get_middles(power_port)
+            box_height = cv2.boundingRect(power_port)[3]
             angle = self.get_horizontal_angle(midX)
-            distance = self.get_distance(midY)
+            distance = self.get_distance(midY, box_height)
+            print(distance)
             return (distance, angle)
         else:
             return None
@@ -198,8 +204,9 @@ class Vision:
         """Main process function.
         When ran, takes image, processes image, and sends results to RIO.
         """
-        if self.Connection.using_nt:
-            self.Connection.pong()
+        if not self.testing:
+            if self.Connection.using_nt:
+                self.Connection.pong()
         frame_time, self.frame = self.CameraManager.get_frame(0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
@@ -231,13 +238,20 @@ class Vision:
 
 
 if __name__ == "__main__":
-    testImg = None
-    testImg = cv2.imread("tests/power_port/7m.PNG")
+    sampleImgs = True
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
-    if type(testImg) != type(None):
-        camera_server = Vision(test_img=testImg, test_display=True)
-        camera_server.run()
+    if sampleImgs:
+        import os
+
+        testImgs = os.listdir("tests/power_port/")
+
+        for im in testImgs:
+            print(im.split("m")[0] + "\t", end="")
+            camera_server = Vision(
+                test_img=cv2.imread("tests/power_port/" + im), test_display=True
+            )
+            camera_server.run()
     else:
         camera_server = Vision(using_nt=True)
         while True:
