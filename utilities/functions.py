@@ -35,7 +35,6 @@ def scale_value(
     result = ratio * output_distance + output_lower
     return math.copysign(result ** exponent, result)
 
-
 def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
     """Gets the corners of a contour.
 
