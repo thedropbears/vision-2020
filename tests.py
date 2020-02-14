@@ -94,6 +94,15 @@ class UtilitiesTests(unittest.TestCase):
             math.sqrt(3), get_distance(math.radians(-10), 4, 3, math.radians(20))
         )
 
+    def test_get_angles(self):
+        self.assertAlmostEqual(
+            math.radians(45), get_horizontal_angle(200, np.array([[100.0, 0.0, 100.0]]))
+        )
+        self.assertAlmostEqual(
+            math.radians(30),
+            get_vertical_angle(100.0, np.array([[], [0.0, 50 * math.sqrt(3), 50.0]])),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
