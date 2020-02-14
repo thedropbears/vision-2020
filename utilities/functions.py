@@ -87,3 +87,54 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
             upper = current
         i += 1
     return hull
+
+
+# The next two functions' `x` and `y` arguments are in camera coordinates.
+# The origin is the top left corner of the screen, with left and down being positive.
+
+# Both have an `invert` argument which, if False, leaves the return angle with negative
+# at the origin, and if True, has positive at the origin.
+
+# The intrinsic matrix should look like this:
+# np.array([
+#    [FX, 0.0, CX],
+#    [0.0, FY, CY],
+#    [0.0, 0.0, 1.0],
+# ])
+# Where FX and FY are the focal lengths in the horizontal and vertical
+# sizes of pixels, respectively, and CX and CY are the centres of the frame.
+# These values should be calculated by calibration, but can be calculated manually.
+
+
+def get_vertical_angle(y: int, intr_matrix: np.ndarray, inverted=False) -> float:
+    """Get the vertical angle of a point to the camera's centre.
+
+    Args:
+        y: The `y` of a point in camera coordinates. (As explained above)
+        intr_matrix: The camera's intrinsic properties (As explained above)
+        inverted: Inverts the output angle (As explained above)
+    Returns:
+        An angle, in radians.
+    """
+    if inverted:
+        return math.atan2(intr_matrix[1][2] - y, intr_matrix[1][1])
+    else:
+        return math.atan2(y - intr_matrix[1][2], intr_matrix[1][1])
+
+
+def get_horizontal_angle(x: int, intr_matrix: np.ndarray, inverted=False) -> float:
+    """Get the horizontal angle of a point to the camera's centre.
+
+    Args:
+        y: The `x` of a point in camera coordinates. (As explained above)
+        intr_matrix: The camera's intrinsic properties (As explained above)
+        inverted: Inverts the output angle (As explained above)
+    Returns:
+        An angle, in radians.
+    """
+    if inverted:
+        return math.atan2(intr_matrix[0][2] - x, intr_matrix[0][0])
+    else:
+        return math.atan2(x - intr_matrix[0][2], intr_matrix[0][0])
+
+
