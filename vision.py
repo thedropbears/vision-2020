@@ -45,10 +45,8 @@ class Vision:
         if not self.testing:
             self.CameraManager.setCameraProperty(0, "white_balance_temperature_auto", 0)
             self.CameraManager.setCameraProperty(0, "exposure_auto", 1)
-            # self.CameraManager.setCameraProperty(0, "exposure_auto_priority", 0)
             self.CameraManager.setCameraProperty(0, "focus_auto", 0)
             self.CameraManager.setCameraProperty(0, "exposure_absolute", 1)
-            # self.CameraManager.setCameraProperty(0, "raw_exposure_absolute", 1)
 
         self.Connection = Connection(using_nt=using_nt, test=self.testing)
 
@@ -88,13 +86,13 @@ class Vision:
                     next_child = inner_rects[next_child][1][0]
                 largest = max(current_inners, key=lambda x: x[2])
                 if (
-                    abs((outer_rects[i][2] / largest[2]) - INNER_OUTER_RATIO) < 0.5
+                    abs((outer_rects[i][2] / largest[2]) - LOADING_INNER_OUTER_RATIO) < 0.5
                     and abs(
                         (cv2.contourArea(outer_rects[i][0]) / outer_rects[i][2]) - 1
                     )
-                    < RECT_AREA_RATIO
+                    < LOADING_RECT_AREA_RATIO
                     and abs((cv2.contourArea(largest[0]) / largest[2]) - 1)
-                    < RECT_AREA_RATIO
+                    < LOADING_RECT_AREA_RATIO
                 ):
                     good.append((outer_rects[i], largest))
 
@@ -122,7 +120,7 @@ class Vision:
                 hull_area = cv2.contourArea(cv2.convexHull(current_contour[1]))
                 if (
                     area > MIN_CONTOUR_AREA
-                    and area / hull_area > 0.2
+                    and area / hull_area > POWRE_PORT_AREA_RATIO
                     and box[2] > box[3]
                 ):
                     acceptable_cnts.append(current_contour[1])
