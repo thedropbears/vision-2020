@@ -2,7 +2,7 @@ import unittest
 import cv2
 import numpy as np
 from vision import Vision
-from utilities.functions import get_corners_from_contour
+from utilities.functions import *
 
 
 class VisionTests(unittest.TestCase):
@@ -57,8 +57,22 @@ class UtilitiesTests(unittest.TestCase):
             ],
         ]
     )
+    INTR_MATRIX = np.array(
+        [[320, 0.0, 160], [0.0, 320, 120], [0.0, 0.0, 1.0]], dtype=np.float32
+    )
 
-    def test_contour_approx(self):
+    DIST_COEFFS = np.array(
+        [
+            [
+                1.27391079e-01,
+                -5.09404111e-01,
+                -7.87105714e-04,
+                2.60450896e-03,
+                1.04097100e00,
+            ]
+        ],
+        dtype=np.float32,
+    )
         for inputs, outputs in zip(self.TEST_INPUTS, self.TEST_OUTPUTS):
             self.assertTrue(
                 np.array_equal(
