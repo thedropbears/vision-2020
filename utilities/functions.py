@@ -1,5 +1,39 @@
 import cv2
 import numpy as np
+import math
+
+
+def scale_value(
+    value: float,
+    input_lower: float,
+    input_upper: float,
+    output_lower: float,
+    output_upper: float,
+    exponent: float = 1,
+) -> float:
+    """Scales a value based on the input range and output range.
+    For example, to scale a joystick throttle (1 to -1) to 0-1, we would:
+        scale_value(joystick.getThrottle(), 1, -1, 0, 1)
+    The output is then raised to the exponent argument.
+
+    Args:
+        value: The value to be scaled.
+        input_lower: The `lower` end of the input range. Note that lower in this case
+            does not necessarily mean lower, just that it maps to the `lower` output.
+        input_upper: Similar to `input_lower`, but the other bound.
+        output_lower: The value which `input_lower` should scale to.
+        output_upper: The value which `input_upper` should scale to.
+        exponent (optional): The power to raise the result to.
+            Note that sign is preserved.
+    Returns:
+        The scaled value (es explained above).
+    """
+
+    input_distance = input_upper - input_lower
+    output_distance = output_upper - output_lower
+    ratio = (value - input_lower) / input_distance
+    result = ratio * output_distance + output_lower
+    return math.copysign(result ** exponent, result)
 
 
 def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
