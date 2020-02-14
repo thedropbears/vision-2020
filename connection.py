@@ -11,7 +11,7 @@ TIME_TO_PONG = 0.00000001
 
 
 class Connection:
-    def __init__(self, using_nt=False, test=False):
+    def __init__(self, using_nt=False, test:bool = False):
         """Initialises Connection class.
 
         Args:
@@ -19,7 +19,7 @@ class Connection:
             entries (list): list of the names, in order, of the
             networktables entries (only if using_nt = True)
         """
-        if type(test) != type(None):
+        if test:
             self.test = True
         else:
             self.test = False
