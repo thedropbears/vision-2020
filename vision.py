@@ -120,7 +120,7 @@ class Vision:
                 hull_area = cv2.contourArea(cv2.convexHull(current_contour[1]))
                 if (
                     area > MIN_CONTOUR_AREA
-                    and area / hull_area > POWRE_PORT_AREA_RATIO
+                    and area / hull_area > POWER_PORT_AREA_RATIO
                     and box[2] > box[3]
                 ):
                     acceptable_cnts.append(current_contour[1])
