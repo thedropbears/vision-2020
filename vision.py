@@ -14,6 +14,7 @@ from camera_manager import CameraManager
 from magic_numbers import *
 import math
 import time
+from utilities.functions import get_corners_from_contour
 
 
 class Vision:
@@ -28,12 +29,7 @@ class Vision:
     entries = None
 
     def __init__(
-        self,
-        test_img=None,
-        test_video=None,
-        test_display=False,
-        using_nt=False,
-        zooming=False,
+        self, test_img=None, test_video=None, test_display=False, using_nt=False,
     ):
         # self.entries = entries
         # Memory Allocation
@@ -47,37 +43,10 @@ class Vision:
         )
 
         self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
-        self.zoom = 100
 
         self.testing = not (
             type(test_img) == type(None) or type(test_video) == type(None)
         )
-        self.zoom = 100
-        self.lastZoom = 100
-        self.zooming = zooming
-
-    def find_polygon(self, contour: np.ndarray, n_points: int = 4):
-        """Finds the polygon which most accurately matches the contour.
-
-        Args:
-            contour (np.ndarray): Should be a numpy array of the contour with shape (1, n, 2).
-            n_points (int): Designates the number of corners which the polygon should have.
-
-        Returns:
-            np.ndarray: A list of points representing the polygon's corners.
-        """
-        coefficient = CONTOUR_COEFFICIENT
-        for _ in range(20):
-            epsilon = coefficient * cv2.arcLength(contour, True)
-            poly_approx = cv2.approxPolyDP(contour, epsilon, True)
-            hull = cv2.convexHull(poly_approx)
-            if len(hull) == n_points:
-                return hull
-            if len(hull) > n_points:
-                coefficient += 0.01
-            else:
-                coefficient -= 0.01
-        return None
 
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
@@ -91,13 +60,13 @@ class Vision:
         for i, cnt in enumerate(cnts):
             if hierarchy[i][3] == -1:
                 outer_rects[i] = (
-                    self.find_polygon(cnt),
+                    get_corners_from_contour(cnt),
                     hierarchy[i],
                     cv2.contourArea(cnt),
                 )
             else:
                 inner_rects[i] = (
-                    self.find_polygon(cnt),
+                    get_corners_from_contour(cnt),
                     hierarchy[i],
                     cv2.contourArea(cnt),
                 )
@@ -154,43 +123,52 @@ class Vision:
                 ):
                     acceptable_cnts.append(current_contour[1])
 
-            power_port_contour = max(acceptable_cnts, key=lambda x: cv2.contourArea(x))
-            power_port_points = self.find_polygon(power_port_contour)
-            # x, y, w, h = cv2.boundingRect(power_port_contour)
-            return power_port_contour, power_port_points
+            if acceptable_cnts:
+                power_port_contour = max(
+                    acceptable_cnts, key=lambda x: cv2.contourArea(x)
+                )
+                power_port_points = get_corners_from_contour(power_port_contour)
+                # x, y, w, h = cv2.boundingRect(power_port_contour)
+                return power_port_points
+            else:
+                return None
         else:
             return None
 
-    def create_annotated_display(self, frame: np.ndarray, points: np.ndarray, printing=False):
+    def create_annotated_display(
+        self, frame: np.ndarray, points: np.ndarray, printing=False
+    ):
         for i in range(len(points)):
             cv2.circle(frame, (points[i][0][0], points[i][0][1]), 5, (0, 255, 0))
         if printing == True:
             print(points)
 
+    def get_vertical_angle(self, p: int):
+        """Gets angle of point p above the horizontal.
+        Parameter p should have 0 at the bottom of the frame and FRAME_HEIGHT at the top. """
+        return math.atan2(p - FRAME_HEIGHT, FY)
+
     # get_angle and get_distance will be replaced with solve pnp eventually
-    def get_angle(self, X:float) -> float:
+    def get_horizontal_angle(self, X: float) -> float:
         return (
-            ((X / FRAME_WIDTH) - 0.5) * MAX_FOV_WIDTH * self.zoom / 100
-        )  # 33.18 degrees #gets the angle
+            (X / FRAME_WIDTH) - 0.5
+        ) * MAX_FOV_WIDTH  # 33.18 degrees #gets the angle
 
-    def get_distance(self, contour: np.ndarray, angle: float) -> float:
-        box = cv2.boundingRect(contour)
-        width = box[2]
-        distance = (
-            PORT_DIMENTIONS[0]
-            / math.tan((width / FRAME_WIDTH) * (MAX_FOV_WIDTH / 2))
-            * (self.zoom / 100)
-        )  # the current method this uses is not mathmetically correct, the correct method would use the law of cosines
-        # this just uses a tan and then tries to correct itself
-        distance -= angle * 1.9
-        distance *= 0.6
-        return distance
+    def get_distance(self, Y: float) -> float:
+        target_angle = self.get_vertical_angle(Y)
+        # print(f"Total Angle: {math.degrees(target_angle + GROUND_ANGLE)}")
+        return (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
 
-    def get_middle(self, contour: np.ndarray) -> tuple:
-        # https://www.pyimagesearch.com/2016/02/01/opencv-center-of-contour/
+    def get_middles(self, contour: np.ndarray) -> tuple:
+        """ Use the cv2 moments to find the centre x of the contour.
+        We just copied it from the opencv reference. The y is just the lowest
+        pixel in the image."""
         M = cv2.moments(contour)
-        cX = int(M["m10"] / M["m00"])
-        cY = int(M["m01"] / M["m00"])
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+        else:
+            cX = 160
+        cY = max(list(contour[:, :, 1]))
         return cX, cY
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
@@ -199,15 +177,19 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
-        power_port, points = self.find_power_port(self.mask)
-        self.create_annotated_display(frame, points)
-        if repr(power_port) != "None":
-            midX = self.get_middle(power_port)[0]  # finds middle of target
-            angle = self.get_angle(midX)
-            distance = -self.get_distance(power_port, angle)
-            self.image = self.mask
-            print(angle, distance)
-            return (power_port, -angle, distance)
+        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+        self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
+        self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
+
+        power_port = self.find_power_port(self.mask)
+        self.image = self.mask
+
+        if power_port is not None:
+            self.create_annotated_display(frame, power_port)
+            midX, midY = self.get_middles(power_port)
+            angle = self.get_horizontal_angle(midX)
+            distance = self.get_distance(midY)
+            return (distance, angle)
         else:
             return None
 
@@ -216,30 +198,22 @@ class Vision:
         """Main process function.
         When ran, takes image, processes image, and sends results to RIO.
         """
+        if self.Connection.using_nt:
+            self.Connection.pong()
         frame_time, self.frame = self.CameraManager.get_frame(0)
-        # self.frame = cv2.flip(self.frame, 0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
             self.CameraManager.source.notifyError(
                 self.CameraManager.sinks[0].getError()
             )
         else:
-
+            self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
             results = self.get_image_values(self.frame)
-            endTime = time.time()
-            if results != None:
+            if results is not None:
+                distance, angle = results
                 self.Connection.send_results(
-                    (results[2], results[1], time.monotonic())
+                    (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
-
-                if self.zooming == True:
-                    self.lastZoom = self.zoom
-                    self.zoom = self.translate(abs(results[1]), 0.45, 0, 100, 200)
-                    if abs(self.lastZoom - self.zoom) > 20:
-                        self.CameraManager.setCameraProperty(
-                            0, "zoom_absolute", round(self.zoom)
-                        )
-                # print(results[2])
             self.CameraManager.send_frame(self.image)
 
     def translate(
@@ -265,6 +239,6 @@ if __name__ == "__main__":
         camera_server = Vision(test_img=testImg, test_display=True)
         camera_server.run()
     else:
-        camera_server = Vision(using_nt=True, zooming=False)
+        camera_server = Vision(using_nt=True)
         while True:
             camera_server.run()
