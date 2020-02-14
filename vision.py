@@ -29,7 +29,7 @@ class Vision:
     entries = None
 
     def __init__(
-        self, test_img=None, test_video=None, test_display=False, using_nt=False,
+        self, test_img=[], test_video=[], test_display=False, using_nt=False,
     ):
         # self.entries = entries
         # Memory Allocation
@@ -41,19 +41,16 @@ class Vision:
         self.CameraManager = CameraManager(
             test_img=test_img, test_video=test_video, test_display=test_display
         )
+        self.testing = len(test_video) or len(test_img)
+        if not self.testing:
+            self.CameraManager.setCameraProperty(0, "white_balance_temperature_auto", 0)
+            self.CameraManager.setCameraProperty(0, "exposure_auto", 1)
+            # self.CameraManager.setCameraProperty(0, "exposure_auto_priority", 0)
+            self.CameraManager.setCameraProperty(0, "focus_auto", 0)
+            self.CameraManager.setCameraProperty(0, "exposure_absolute", 1)
+            # self.CameraManager.setCameraProperty(0, "raw_exposure_absolute", 1)
 
-        self.CameraManager.setCameraProperty(0, "white_balance_temperature_auto", 0)
-        self.CameraManager.setCameraProperty(0, "exposure_auto", 1)
-        # self.CameraManager.setCameraProperty(0, "exposure_auto_priority", 0)
-        self.CameraManager.setCameraProperty(0, "focus_auto", 0)
-        self.CameraManager.setCameraProperty(0, "exposure_absolute", 1)
-        # self.CameraManager.setCameraProperty(0, "raw_exposure_absolute", 1)
-
-        self.Connection = Connection(using_nt=using_nt, test=test_video or test_img)
-
-        self.testing = not (
-            type(test_img) == type(None) or type(test_video) == type(None)
-        )
+        self.Connection = Connection(using_nt=using_nt, test=self.testing)
 
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
@@ -158,27 +155,15 @@ class Vision:
         # Opposite direction from pixel space: up is positive
 
     # get_angle and get_distance will be replaced with solve pnp eventually
-    def get_horizontal_angle(self, X: float) -> float:
+    def get_horizontal_angle(self, x : float) -> float:
         return math.atan2(x - FRAME_WIDTH / 2, FX)
          # Same direction as pixel space: right is positive
 
     def get_distance(self, y: int, h: int) -> float:
-        # box = cv2.boundingRect(contour)
-        # target_angle = self.get_vertical_angle(box[1]+box[3]/2)
-        target_angle = (
-            (y / FRAME_HEIGHT)
-        ) * MAX_FOV_HEIGHT  # vertical angle of the target from the center of the camera
-        distance = (2.5 - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
-        distance = self.translate(distance, 1.7, 0.65, 3, 11)
-
-        distance2 = h
-        distance2 = self.translate(distance2, 45, 18, 3, 11)
-
-        combined_dist = (distance2 + distance) / 2
-        adjusted_dist = (
-            5.21 + -1.15 * combined_dist + 0.145 * combined_dist ** 2
-        )  # gotten from google sheets
-        return adjusted_dist
+        #y is the y position in px of the bottom of the target, h is the height of the box of the target
+        target_angle = self.get_vertical_angle(y)
+        distance = (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
+        return distance
 
     def get_middles(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
@@ -221,8 +206,9 @@ class Vision:
         """Main process function.
         When ran, takes image, processes image, and sends results to RIO.
         """
-        if self.Connection.using_nt:
-            self.Connection.pong()
+        if not self.testing:
+            if self.Connection.using_nt:
+                self.Connection.pong()
         frame_time, self.frame = self.CameraManager.get_frame(0)
         if frame_time == 0:
             print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
@@ -254,7 +240,7 @@ class Vision:
 
 
 if __name__ == "__main__":
-    sampleImgs = False
+    sampleImgs = True
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
     if sampleImgs:

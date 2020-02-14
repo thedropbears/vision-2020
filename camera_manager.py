@@ -9,15 +9,15 @@ import cv2
 class CameraManager:
     CONFIG_FILE_PATH = "/boot/frc.json"
 
-    def __init__(self, test_img=None, test_video=None, test_display=False):
+    def __init__(self, test_img=[], test_video=[], test_display=False):
         self.testing = False
         self.frame = None
         self.video = None
         self.test_display = test_display
-        if not type(test_img) == type(None):
+        if len(test_img) > 0:
             self.testing = True
             self.frame = test_img
-        elif not type(test_video) == type(None):
+        elif len(test_video) == 0:
             self.testing = True
             self.video = test_video
         else:
