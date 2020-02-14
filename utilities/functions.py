@@ -152,6 +152,6 @@ def get_distance(
         camera_height: The height of the camera above the ground (in metres)
         camera_tilt: The camera's angle of elevation from the ground (upwards is positive)
     Returns:
-        A positive perpendicular distance to the target along the ground (in metres)
+        A positive distance to the target along the ground (in metres)
     """
     return (target_height - camera_height) / math.tan(camera_tilt - target_angle)
