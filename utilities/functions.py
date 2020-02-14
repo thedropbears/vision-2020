@@ -95,7 +95,7 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
 # The origin is the top left corner of the screen, with right and down being positive.
 
 # Both have an `invert` argument which, if False, leaves the return angle with negative
-# at the origin, and if True, has positive at the origin.
+# at the camera coordinates' origin, and if True, has positive at the camera coordinates' origin.
 
 # The intrinsic matrix should look like this:
 # np.array([
