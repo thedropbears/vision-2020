@@ -58,6 +58,8 @@ INTR_MATRIX = np.array(
 )
 DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
 
+# The intrinsic matrix for the second Logitech C920.
+# Found by calibration.
 C920_2_INTR_MATRIX = np.array(
     [
         [310.6992514, 0.0, 152.13193831],
@@ -67,6 +69,8 @@ C920_2_INTR_MATRIX = np.array(
     dtype=np.float32,
 )
 
+# The distortion coefficients for the second Logitech C920.
+# Found by calibration.
 C920_2_DIST_COEFFS = np.array(
     [[0.13840045, -0.3277049, -0.00142985, -0.00095689, 0.28607425]], dtype=np.float32
 )
