@@ -86,7 +86,8 @@ class Vision:
                     next_child = inner_rects[next_child][1][0]
                 largest = max(current_inners, key=lambda x: x[2])
                 if (
-                    abs((outer_rects[i][2] / largest[2]) - LOADING_INNER_OUTER_RATIO) < 0.5
+                    abs((outer_rects[i][2] / largest[2]) - LOADING_INNER_OUTER_RATIO)
+                    < 0.5
                     and abs(
                         (cv2.contourArea(outer_rects[i][0]) / outer_rects[i][2]) - 1
                     )
@@ -176,7 +177,9 @@ class Vision:
             # box_height = cv2.boundingRect(power_port)[3] # using this could make it more reliable
             angle = get_horizontal_angle(midX, INTR_MATRIX)
             vert_angle = get_vertical_angle(midY, INTR_MATRIX)
-            distance = get_distance(vert_angle, TARGET_HEIGHT, CAMERA_HEIGHT, GROUND_ANGLE)
+            distance = get_distance(
+                vert_angle, TARGET_HEIGHT, CAMERA_HEIGHT, GROUND_ANGLE
+            )
             print(distance)
             return (distance, angle)
         else:
