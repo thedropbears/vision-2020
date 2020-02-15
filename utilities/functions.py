@@ -155,3 +155,43 @@ def get_distance(
         A positive distance to the target along the ground (in metres)
     """
     return (target_height - camera_height) / math.tan(camera_tilt - target_angle)
+
+
+def get_values_solvepnp(
+    image_points: np.ndarray,
+    object_points: np.ndarray,
+    intr_matrix: np.ndarray,
+    dist_coeffs: np.ndarray,
+):
+    """Gets the distance and horizontal angle of a target using solvepnp.
+
+    This function is still experimental. It has given correct-looking values when done manually,
+    but no real tests have been done. Ways to improve include geting better camera intrinsics
+    by calibrating with more images, and also by improving the point-finding algorithm.
+    It is possible, however, that this will not be used as it has the possibility
+    of wild inconsistencies (from small changes in points) that the vertical angle method does not have.
+
+    The output distance will be in the same units that the object_points are in, so they should
+    be in metres. The origin is at a point that we pick. x is left-positive, y is up-positive,
+    and z is positive towards us/the camera.
+
+    NOTE: solvePnP does not work unless all of its arguments are numpy arrays with dtype=np.float32
+
+    Args:
+        image_points: The points of the target in camera coordinates. Down and right is positive,
+            with the origin at the top-left of the image. 
+        object_points: Points of the target in world coordinates.
+        intr_matrix: The camera's intrinsic matrix.
+        dist_coeffs: The camera's intrinsic distortion coefficients.
+    Returns:
+        distance: The ground distance to the target
+        angle: The horizontal angle of the target to the centre plane
+            of the camera. Right is positive.
+    """
+
+    ret, rvec, tvec = cv2.solvePnP(
+        object_points, image_points, intr_matrix, dist_coeffs
+    )
+    distance = math.hypot(tvec[0], tvec[2])
+    angle = math.atan2(tvec[0], tvec[2])
+    return distance, angle
