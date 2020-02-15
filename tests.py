@@ -6,7 +6,7 @@ from utilities.functions import *
 
 
 class VisionTests(unittest.TestCase):
-    def test_sample_images(self):
+    def _test_sample_images(self):
         f = open("./tests/power_port/results.csv", "r")
         lines = f.read().split("\n")
         f.close()
@@ -47,14 +47,19 @@ class UtilitiesTests(unittest.TestCase):
     )
     TEST_OUTPUTS = np.array(
         [
-            [[[67, 40]], [[258, 43]], [[211, 160]], [[86, 146]]],
             [
-                [[66, 65]],
-                [[116, 50]],
-                [[152, 79]],
-                [[152, 121]],
-                [[100, 132]],
-                [[64, 116]],
+                np.array([[67, 40]], dtype=np.int32),
+                np.array([[258, 43]], dtype=np.int32),
+                np.array([[211, 160]], dtype=np.int32),
+                np.array([[86, 146]], dtype=np.int32),
+            ],
+            [
+                np.array([[66, 65]], dtype=np.int32),
+                np.array([[116, 50]], dtype=np.int32),
+                np.array([[150, 79]], dtype=np.int32),
+                np.array([[152, 121]], dtype=np.int32),
+                np.array([[100, 132]], dtype=np.int32),
+                np.array([[64, 116]], dtype=np.int32),
             ],
         ]
     )
@@ -94,7 +99,7 @@ class UtilitiesTests(unittest.TestCase):
             get_vertical_angle(100.0, np.array([[], [0.0, 50 * math.sqrt(3), 50.0]])),
         )
 
-    def _test_contour_approx(self):
+    def test_contour_approx(self):
         for inputs, outputs in zip(self.TEST_INPUTS, self.TEST_OUTPUTS):
             self.assertTrue(
                 np.array_equal(
