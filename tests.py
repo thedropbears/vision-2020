@@ -92,11 +92,11 @@ class UtilitiesTests(unittest.TestCase):
 
     def test_get_angles(self):
         self.assertAlmostEqual(
-            math.radians(45), get_horizontal_angle(200, np.array([[100.0, 0.0, 100.0]]))
+            math.radians(45), get_horizontal_angle(100, 100, math.radians(45))
         )
         self.assertAlmostEqual(
             math.radians(30),
-            get_vertical_angle(100.0, np.array([[], [0.0, 50 * math.sqrt(3), 50.0]])),
+            get_vertical_angle(100, 400, math.radians(60), inverted=True),
         )
 
     def test_contour_approx(self):

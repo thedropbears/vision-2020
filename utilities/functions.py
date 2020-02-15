@@ -38,6 +38,7 @@ def scale_value(
     else:
         return math.copysign(result ** exponent, result)
 
+
 def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
     """Gets the corners of a contour.
 
@@ -97,47 +98,43 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
 # Both have an `invert` argument which, if False, leaves the return angle with negative
 # at the camera coordinates' origin, and if True, has positive at the camera coordinates' origin.
 
-# The intrinsic matrix should look like this:
-# np.array([
-#    [FX, 0.0, CX],
-#    [0.0, FY, CY],
-#    [0.0, 0.0, 1.0],
-# ])
-# Where FX and FY are the focal lengths in the horizontal and vertical
-# sizes of pixels, respectively, and CX and CY are the centres of the frame.
-# These values should be calculated by calibration, but can be calculated manually.
 
-
-def get_vertical_angle(y: int, intr_matrix: np.ndarray, inverted=False) -> float:
+def get_vertical_angle(
+    y: int, frame_height: int, half_fov: float, inverted=False
+) -> float:
     """Get the vertical angle of a point to the camera's centre.
 
     Args:
         y: The `y` of a point in camera coordinates. (As explained above)
-        intr_matrix: The camera's intrinsic properties (As explained above)
+        half_fov: Half of the field of view (in radians)
+        frame_height: The total frame height
         inverted: Inverts the output angle (As explained above)
     Returns:
         An angle, in radians.
     """
     if inverted:
-        return math.atan2(intr_matrix[1][2] - y, intr_matrix[1][1])
+        return scale_value(y, 0, frame_height, half_fov, -half_fov)
     else:
-        return math.atan2(y - intr_matrix[1][2], intr_matrix[1][1])
+        return scale_value(y, 0, frame_height, -half_fov, half_fov)
 
 
-def get_horizontal_angle(x: int, intr_matrix: np.ndarray, inverted=False) -> float:
+def get_horizontal_angle(
+    x: int, frame_width: int, half_fov: float, inverted=False
+) -> float:
     """Get the horizontal angle of a point to the camera's centre.
 
     Args:
-        y: The `x` of a point in camera coordinates. (As explained above)
-        intr_matrix: The camera's intrinsic properties (As explained above)
+        x: The `x` of a point in camera coordinates. (As explained above)
+        half_fov: Half of the field of view (in radians)
+        frame_width: The total frame width
         inverted: Inverts the output angle (As explained above)
     Returns:
         An angle, in radians.
     """
     if inverted:
-        return math.atan2(intr_matrix[0][2] - x, intr_matrix[0][0])
+        return scale_value(x, 0, frame_width, half_fov, -half_fov)
     else:
-        return math.atan2(x - intr_matrix[0][2], intr_matrix[0][0])
+        return scale_value(x, 0, frame_width, -half_fov, half_fov)
 
 
 def get_distance(
