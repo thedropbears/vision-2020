@@ -12,9 +12,9 @@ import numpy as np
 from connection import Connection
 from camera_manager import CameraManager
 from magic_numbers import *
+from utilities.functions import *
 import math
 import time
-from utilities.functions import get_corners_from_contour
 
 
 class Vision:
@@ -86,7 +86,8 @@ class Vision:
                     next_child = inner_rects[next_child][1][0]
                 largest = max(current_inners, key=lambda x: x[2])
                 if (
-                    abs((outer_rects[i][2] / largest[2]) - LOADING_INNER_OUTER_RATIO) < 0.5
+                    abs((outer_rects[i][2] / largest[2]) - LOADING_INNER_OUTER_RATIO)
+                    < 0.5
                     and abs(
                         (cv2.contourArea(outer_rects[i][0]) / outer_rects[i][2]) - 1
                     )
@@ -145,24 +146,6 @@ class Vision:
         if printing == True:
             print(points)
 
-    # Both get_angle functions translate origin from top-left to centre.
-    def get_vertical_angle(self, p: int):
-        """Gets angle of point p above the horizontal.
-        Parameter p should have 0 at the top of the frame and FRAME_HEIGHT at the bottom. """
-        return math.atan2(FRAME_HEIGHT / 2 - p, FY)
-        # Opposite direction from pixel space: up is positive
-
-    # get_angle and get_distance will be replaced with solve pnp eventually
-    def get_horizontal_angle(self, x : float) -> float:
-        return math.atan2(x - FRAME_WIDTH / 2, FX)
-         # Same direction as pixel space: right is positive
-
-    def get_distance(self, y: int, h: int) -> float:
-        #y is the y position in px of the bottom of the target, h is the height of the box of the target
-        target_angle = self.get_vertical_angle(y)
-        distance = (TARGET_HEIGHT - CAMERA_HEIGHT) / math.tan(GROUND_ANGLE + target_angle)
-        return distance
-
     def get_middles(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
         We just copied it from the opencv reference. The y is just the lowest
@@ -191,9 +174,12 @@ class Vision:
         if power_port is not None:
             self.create_annotated_display(frame, power_port)
             midX, midY = self.get_middles(power_port)
-            box_height = cv2.boundingRect(power_port)[3]
-            angle = self.get_horizontal_angle(midX)
-            distance = self.get_distance(midY, box_height)
+            # box_height = cv2.boundingRect(power_port)[3] # using this could make it more reliable
+            angle = get_horizontal_angle(midX, INTR_MATRIX)
+            vert_angle = get_vertical_angle(midY, INTR_MATRIX)
+            distance = get_distance(
+                vert_angle, TARGET_HEIGHT, CAMERA_HEIGHT, GROUND_ANGLE
+            )
             print(distance)
             return (distance, angle)
         else:
@@ -222,19 +208,6 @@ class Vision:
                     (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
             self.CameraManager.send_frame(self.image)
-
-    def translate(
-        self, value, leftMin, leftMax, rightMin, rightMax
-    ):  # https://stackoverflow.com/questions/1969240/mapping-a-range-of-values-to-another
-        # Figure out how 'wide' each range is
-        leftSpan = leftMax - leftMin
-        rightSpan = rightMax - rightMin
-
-        # Convert the left range into a 0-1 range (float)
-        valueScaled = float(value - leftMin) / float(leftSpan)
-
-        # Convert the 0-1 range into a value in the right range.
-        return rightMin + (valueScaled * rightSpan)
 
 
 if __name__ == "__main__":
