@@ -58,6 +58,19 @@ INTR_MATRIX = np.array(
 )
 DIST_COEFF = np.array([0, 0, 0, 0], dtype=np.float32)
 
+C920_2_INTR_MATRIX = np.array(
+    [
+        [310.6992514, 0.0, 152.13193831],
+        [0.0, 312.88049348, 120.88875952],
+        [0.0, 0.0, 1.0],
+    ],
+    dtype=np.float32,
+)
+
+C920_2_DIST_COEFFS = np.array(
+    [[0.13840045, -0.3277049, -0.00142985, -0.00095689, 0.28607425]], dtype=np.float32
+)
+
 CAMERA_HEIGHT = 0.66
 TARGET_HEIGHT = 2.04
 GROUND_ANGLE = math.radians(30)
