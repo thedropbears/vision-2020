@@ -151,7 +151,7 @@ class Vision:
         if printing == True:
             print(points)
 
-    def get_middles(self, contour: np.ndarray) -> tuple:
+    def get_mid(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
         We just copied it from the opencv reference. The y is just the lowest
         pixel in the image."""
@@ -160,8 +160,7 @@ class Vision:
             cX = int(M["m10"] / M["m00"])
         else:
             cX = 160
-        cY = max(list(contour[:, :, 1]))
-        return cX, cY
+        return cX
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
@@ -180,12 +179,17 @@ class Vision:
             self.prev_dist = self.avg_dist
             self.prev_angle = self.avg_angle
             self.create_annotated_display(frame, power_port)
-            midX, midY = self.get_middles(power_port)
+            midX = self.get_mid(power_port)
+
+            target_top = min(list(power_port[:, :, 1]))
+            target_bottom = max(list(power_port[:, :, 1]))
             angle = get_horizontal_angle(midX, INTR_MATRIX)
-            vert_angle = get_vertical_angle(midY, INTR_MATRIX)
-            distance = get_distance(
-                vert_angle, TARGET_HEIGHT_BOTTOM, CAMERA_HEIGHT, GROUND_ANGLE
-            )
+            vert_angles = [get_vertical_angle(target_bottom, INTR_MATRIX), get_vertical_angle(target_top, INTR_MATRIX)]
+            distances = [get_distance(vert_angles[0], TARGET_HEIGHT_BOTTOM, CAMERA_HEIGHT, GROUND_ANGLE),
+            get_distance(vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE)
+            ]
+            print(str(distances[0])+"\t"+str(distances[1]))
+            distance = sum(distances)/2
 
             self.avg_dist = distance*(1-DIST_SMOOTHING_AMOUNT)+self.prev_dist*DIST_SMOOTHING_AMOUNT
             self.avg_angle = angle*(1-ANGLE_SMOOTHING_AMOUNT)+self.prev_angle*ANGLE_SMOOTHING_AMOUNT
@@ -215,7 +219,6 @@ class Vision:
             results = self.get_image_values(self.frame)
             if results is not None:
                 distance, angle = results
-                print(distance)
                 self.Connection.send_results(
                     (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
