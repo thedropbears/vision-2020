@@ -50,6 +50,11 @@ class Vision:
 
         self.Connection = Connection(using_nt=using_nt, test=self.testing)
 
+        self.avg_angle = 0
+        self.avg_dist = 0
+        self.prev_dist = 0
+        self.prev_angle = 0
+
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
             self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
@@ -172,16 +177,22 @@ class Vision:
         self.image = self.mask
 
         if power_port is not None:
+            self.prev_dist = self.avg_dist
+            self.prev_angle = self.avg_angle
             self.create_annotated_display(frame, power_port)
             midX, midY = self.get_middles(power_port)
-            # box_height = cv2.boundingRect(power_port)[3] # using this could make it more reliable
             angle = get_horizontal_angle(midX, INTR_MATRIX)
             vert_angle = get_vertical_angle(midY, INTR_MATRIX)
             distance = get_distance(
-                vert_angle, TARGET_HEIGHT, CAMERA_HEIGHT, GROUND_ANGLE
+                vert_angle, TARGET_HEIGHT_BOTTOM, CAMERA_HEIGHT, GROUND_ANGLE
             )
-            print(distance)
-            return (distance, angle)
+
+            self.avg_dist = distance*(1-DIST_SMOOTHING_AMOUNT)+self.prev_dist*DIST_SMOOTHING_AMOUNT
+            self.avg_angle = angle*(1-ANGLE_SMOOTHING_AMOUNT)+self.prev_angle*ANGLE_SMOOTHING_AMOUNT
+            if self.testing:
+                return (distance, angle)
+            else:
+                return (self.avg_dist, self.avg_angle)
         else:
             return None
 
@@ -204,6 +215,7 @@ class Vision:
             results = self.get_image_values(self.frame)
             if results is not None:
                 distance, angle = results
+                print(distance)
                 self.Connection.send_results(
                     (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
