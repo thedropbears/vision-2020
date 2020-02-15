@@ -184,15 +184,29 @@ class Vision:
             target_top = min(list(power_port[:, :, 1]))
             target_bottom = max(list(power_port[:, :, 1]))
             angle = get_horizontal_angle(midX, INTR_MATRIX)
-            vert_angles = [get_vertical_angle(target_bottom, INTR_MATRIX), get_vertical_angle(target_top, INTR_MATRIX)]
-            distances = [get_distance(vert_angles[0], TARGET_HEIGHT_BOTTOM, CAMERA_HEIGHT, GROUND_ANGLE),
-            get_distance(vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE)
+            vert_angles = [
+                get_vertical_angle(target_bottom, INTR_MATRIX),
+                get_vertical_angle(target_top, INTR_MATRIX),
             ]
-            print(str(distances[0])+"\t"+str(distances[1]))
-            distance = sum(distances)/2
+            distances = [
+                get_distance(
+                    vert_angles[0], TARGET_HEIGHT_BOTTOM, CAMERA_HEIGHT, GROUND_ANGLE
+                ),
+                get_distance(
+                    vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
+                ),
+            ]
+            print(str(distances[0]) + "\t" + str(distances[1]))
+            distance = sum(distances) / 2
 
-            self.avg_dist = distance*(1-DIST_SMOOTHING_AMOUNT)+self.prev_dist*DIST_SMOOTHING_AMOUNT
-            self.avg_angle = angle*(1-ANGLE_SMOOTHING_AMOUNT)+self.prev_angle*ANGLE_SMOOTHING_AMOUNT
+            self.avg_dist = (
+                distance * (1 - DIST_SMOOTHING_AMOUNT)
+                + self.prev_dist * DIST_SMOOTHING_AMOUNT
+            )
+            self.avg_angle = (
+                angle * (1 - ANGLE_SMOOTHING_AMOUNT)
+                + self.prev_angle * ANGLE_SMOOTHING_AMOUNT
+            )
             if self.testing:
                 return (distance, angle)
             else:
