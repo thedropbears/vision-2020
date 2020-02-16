@@ -78,7 +78,7 @@ class CameraManager:
         if self.test_display:
             cv2.imshow("frame", self.frame)
             cv2.imshow("image", frame)
-            cv2.waitKey(0)
+            #cv2.waitKey(0)
         else:
             self.source.putFrame(frame)
 

@@ -68,7 +68,6 @@ C920_2_INTR_MATRIX = np.array(
     ],
     dtype=np.float32,
 )
-
 # The distortion coefficients for the second Logitech C920.
 # Found by calibration.
 C920_2_DIST_COEFFS = np.array(
@@ -76,9 +75,9 @@ C920_2_DIST_COEFFS = np.array(
 )
 
 CAMERA_HEIGHT = 0.66
-TARGET_HEIGHT_BOTTOM = 2.04
-TARGET_HEIGHT_TOP = 2.495
-GROUND_ANGLE = math.radians(30)
+TARGET_HEIGHT_BOTTOM = 2.064
+TARGET_HEIGHT_TOP = 2.496
+GROUND_ANGLE = math.radians(25)
 
 ANGLE_SMOOTHING_AMOUNT = 0.3 # how much of the returned angle should be the last returned one
 DIST_SMOOTHING_AMOUNT = 0.8

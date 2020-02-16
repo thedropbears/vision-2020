@@ -183,10 +183,10 @@ class Vision:
 
             target_top = min(list(power_port[:, :, 1]))
             target_bottom = max(list(power_port[:, :, 1]))
-            angle = get_horizontal_angle(midX, INTR_MATRIX)
+            angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH/2)
             vert_angles = [
-                get_vertical_angle(target_bottom, INTR_MATRIX),
-                get_vertical_angle(target_top, INTR_MATRIX),
+                get_vertical_angle(target_bottom, C920_2_INTR_MATRIX, False),
+                get_vertical_angle(target_top, C920_2_INTR_MATRIX, False)
             ]
             distances = [
                 get_distance(
@@ -196,7 +196,7 @@ class Vision:
                     vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
                 ),
             ]
-            print(str(distances[0]) + "\t" + str(distances[1]))
+            print(distances[0])
             distance = sum(distances) / 2
 
             self.avg_dist = (
