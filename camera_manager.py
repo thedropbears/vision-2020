@@ -17,7 +17,7 @@ class CameraManager:
         if len(test_img) > 0:
             self.testing = True
             self.frame = test_img
-        elif len(test_video) == 0:
+        elif len(test_video) > 0:
             self.testing = True
             self.video = test_video
         else:
