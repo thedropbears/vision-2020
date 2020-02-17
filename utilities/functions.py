@@ -156,7 +156,7 @@ def get_distance(
     Returns:
         A positive distance to the target along the ground (in metres)
     """
-    return (target_height - camera_height) / math.tan(camera_tilt - target_angle)
+    return (target_height - camera_height) / math.tan(camera_tilt + target_angle)
 
 
 def get_values_solvepnp(
