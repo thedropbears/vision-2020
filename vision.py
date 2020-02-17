@@ -183,10 +183,11 @@ class Vision:
 
             target_top = min(list(power_port[:, :, 1]))
             target_bottom = max(list(power_port[:, :, 1]))
+            print("target top: ", target_top, " target bottom: ", target_bottom)
             angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH/2)
             vert_angles = [
-                get_vertical_angle(target_bottom, C920_2_INTR_MATRIX, False),
-                get_vertical_angle(target_top, C920_2_INTR_MATRIX, False)
+                get_vertical_angle_linear(target_bottom, FRAME_HEIGHT, MAX_FOV_HEIGHT/2, True),
+                get_vertical_angle_linear(target_top, FRAME_HEIGHT,  MAX_FOV_HEIGHT/2, True)
             ]
             distances = [
                 get_distance(
@@ -196,8 +197,10 @@ class Vision:
                     vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
                 ),
             ]
-            print(distances[0])
-            distance = sum(distances) / 2
+            
+            distance = distances[1]
+            angle = vert_angles[1]
+            print("angle: ", math.degrees(angle), " distance: ", distance)
 
             self.avg_dist = (
                 distance * (1 - DIST_SMOOTHING_AMOUNT)
@@ -240,7 +243,7 @@ class Vision:
 
 
 if __name__ == "__main__":
-    sampleImgs = True
+    sampleImgs = False
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
     if sampleImgs:
