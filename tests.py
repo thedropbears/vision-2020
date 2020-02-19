@@ -80,24 +80,9 @@ class UtilitiesTests(unittest.TestCase):
         dtype=np.float32,
     )
 
-    def test_get_distance(self):
-        self.assertAlmostEqual(1.0, get_distance(math.radians(-45), 2, 1, 0))
-        self.assertAlmostEqual(1.0, get_distance(0, 3, 2, math.radians(45)))
-        self.assertAlmostEqual(
-            1.0, get_distance(math.radians(-20), 3, 2, math.radians(25))
-        )
-        self.assertAlmostEqual(
-            math.sqrt(3), get_distance(math.radians(-10), 4, 3, math.radians(20))
-        )
-
-    def test_get_angles(self):
-        self.assertAlmostEqual(
-            math.radians(45), get_horizontal_angle(100, 100, math.radians(45))
-        )
-        self.assertAlmostEqual(
-            math.radians(30),
-            get_vertical_angle(100, 400, math.radians(60), inverted=True),
-        )
+    def test_scale_value(self):
+        self.assertAlmostEqual(.5, scale_value(0, -1.0, 1.0, 0.0, 1.0))
+        self.assertAlmostEqual(.25, scale_value(0, -1.0, 1.0, 0.0, 1.0, 2))
 
     def test_contour_approx(self):
         for inputs, outputs in zip(self.TEST_INPUTS, self.TEST_OUTPUTS):
@@ -111,6 +96,32 @@ class UtilitiesTests(unittest.TestCase):
                 )
             )
 
+    def test_get_angles(self):
+        self.assertAlmostEqual(
+            math.radians(45), get_horizontal_angle(100, 100, math.radians(45))
+        )
+        self.assertAlmostEqual(
+            math.radians(30),
+            get_vertical_angle_linear(100, 400, math.radians(60), inverted=True),
+        )
+        self.assertAlmostEqual(
+            math.radians(-30),
+            get_vertical_angle_linear(300, 400, math.radians(60), inverted=True),
+        )
+
+    def test_get_distance(self):
+        self.assertAlmostEqual(-1.0, get_distance(math.radians(-45), 2, 1, 0))
+        self.assertAlmostEqual(1.0, get_distance(0, 3, 2, math.radians(45)))
+        self.assertAlmostEqual(
+            1.0, get_distance(math.radians(20), 3, 2, math.radians(25))
+        )
+        self.assertAlmostEqual(
+            math.sqrt(3), get_distance(math.radians(10), 4, 3, math.radians(20))
+        )
+
+    def test_get_values_solvepnp(self):
+        # TODO implement
+        pass
 
 if __name__ == "__main__":
     unittest.main()
