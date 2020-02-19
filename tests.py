@@ -110,13 +110,13 @@ class UtilitiesTests(unittest.TestCase):
         )
 
     def test_get_distance(self):
-        self.assertAlmostEqual(1.0, get_distance(math.radians(-45), 2, 1, 0))
+        self.assertAlmostEqual(-1.0, get_distance(math.radians(-45), 2, 1, 0))
         self.assertAlmostEqual(1.0, get_distance(0, 3, 2, math.radians(45)))
         self.assertAlmostEqual(
-            1.0, get_distance(math.radians(-20), 3, 2, math.radians(25))
+            1.0, get_distance(math.radians(20), 3, 2, math.radians(25))
         )
         self.assertAlmostEqual(
-            math.sqrt(3), get_distance(math.radians(-10), 4, 3, math.radians(20))
+            math.sqrt(3), get_distance(math.radians(10), 4, 3, math.radians(20))
         )
 
     def test_get_values_solvepnp(self):
