@@ -50,6 +50,11 @@ class Vision:
 
         self.Connection = Connection(using_nt=using_nt, test=self.testing)
 
+        self.avg_angle = 0
+        self.avg_dist = 0
+        self.prev_dist = 0
+        self.prev_angle = 0
+
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
             self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
@@ -146,7 +151,7 @@ class Vision:
         if printing == True:
             print(points)
 
-    def get_middles(self, contour: np.ndarray) -> tuple:
+    def get_mid(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
         We just copied it from the opencv reference. The y is just the lowest
         pixel in the image."""
@@ -155,8 +160,7 @@ class Vision:
             cX = int(M["m10"] / M["m00"])
         else:
             cX = 160
-        cY = max(list(contour[:, :, 1]))
-        return cX, cY
+        return cX
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
@@ -172,16 +176,44 @@ class Vision:
         self.image = self.mask
 
         if power_port is not None:
+            self.prev_dist = self.avg_dist
+            self.prev_angle = self.avg_angle
             self.create_annotated_display(frame, power_port)
-            midX, midY = self.get_middles(power_port)
-            # box_height = cv2.boundingRect(power_port)[3] # using this could make it more reliable
-            angle = get_horizontal_angle(midX, INTR_MATRIX)
-            vert_angle = get_vertical_angle(midY, INTR_MATRIX)
-            distance = get_distance(
-                vert_angle, TARGET_HEIGHT, CAMERA_HEIGHT, GROUND_ANGLE
+            midX = self.get_mid(power_port)
+
+            target_top = min(list(power_port[:, :, 1]))
+            target_bottom = max(list(power_port[:, :, 1]))
+            print("target top: ", target_top, " target bottom: ", target_bottom)
+            angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH/2)
+            vert_angles = [
+                get_vertical_angle_linear(target_bottom, FRAME_HEIGHT, MAX_FOV_HEIGHT/2, True),
+                get_vertical_angle_linear(target_top, FRAME_HEIGHT,  MAX_FOV_HEIGHT/2, True)
+            ]
+            distances = [
+                get_distance(
+                    vert_angles[0], TARGET_HEIGHT_BOTTOM, CAMERA_HEIGHT, GROUND_ANGLE
+                ),
+                get_distance(
+                    vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
+                ),
+            ]
+            
+            distance = distances[1]
+            angle = vert_angles[1]
+            print("angle: ", math.degrees(angle), " distance: ", distance)
+
+            self.avg_dist = (
+                distance * (1 - DIST_SMOOTHING_AMOUNT)
+                + self.prev_dist * DIST_SMOOTHING_AMOUNT
             )
-            print(distance)
-            return (distance, angle)
+            self.avg_angle = (
+                angle * (1 - ANGLE_SMOOTHING_AMOUNT)
+                + self.prev_angle * ANGLE_SMOOTHING_AMOUNT
+            )
+            if self.testing:
+                return (distance, angle)
+            else:
+                return (self.avg_dist, self.avg_angle)
         else:
             return None
 
@@ -211,7 +243,7 @@ class Vision:
 
 
 if __name__ == "__main__":
-    sampleImgs = True
+    sampleImgs = False
     # These imports are here so that one does not have to install cscore
     # (a somewhat difficult project on Windows) to run tests.
     if sampleImgs:

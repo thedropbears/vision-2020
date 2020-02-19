@@ -9,8 +9,8 @@ FOCAL_LENGTH = 3.67  # mm
 SENSOR_WIDTH = 4.8  # mm
 SENSOR_HEIGHT = 3.6  # mm
 
-MAX_FOV_WIDTH = 1.158375  # 66.37
-MAX_FOV_HEIGHT = 0.91193453  # 52.25
+MAX_FOV_WIDTH = math.radians(53.51)  # 66.37
+MAX_FOV_HEIGHT = math.radians(41.11)  # 52.25
 
 MAX_ZOOM = 200
 
@@ -68,7 +68,6 @@ C920_2_INTR_MATRIX = np.array(
     ],
     dtype=np.float32,
 )
-
 # The distortion coefficients for the second Logitech C920.
 # Found by calibration.
 C920_2_DIST_COEFFS = np.array(
@@ -76,5 +75,9 @@ C920_2_DIST_COEFFS = np.array(
 )
 
 CAMERA_HEIGHT = 0.66
-TARGET_HEIGHT = 2.04
-GROUND_ANGLE = math.radians(30)
+TARGET_HEIGHT_BOTTOM = 2.064
+TARGET_HEIGHT_TOP = 2.496
+GROUND_ANGLE = math.radians(20)
+
+ANGLE_SMOOTHING_AMOUNT = 0.3 # how much of the returned angle should be the last returned one
+DIST_SMOOTHING_AMOUNT = 0.8

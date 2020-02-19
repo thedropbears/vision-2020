@@ -17,7 +17,7 @@ class CameraManager:
         if len(test_img) > 0:
             self.testing = True
             self.frame = test_img
-        elif len(test_video) == 0:
+        elif len(test_video) > 0:
             self.testing = True
             self.video = test_video
         else:
@@ -78,7 +78,7 @@ class CameraManager:
         if self.test_display:
             cv2.imshow("frame", self.frame)
             cv2.imshow("image", frame)
-            cv2.waitKey(0)
+            #cv2.waitKey(0)
         else:
             self.source.putFrame(frame)
 
