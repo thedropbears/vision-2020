@@ -71,14 +71,14 @@ class CameraManager:
             else:
                 return 1, self.frame
         frame_time, self.frame = self.sinks[camera].grabFrameNoTimeout(image=self.frame)
-        #self.frame = cv2.flip(self.frame, 0)
+        # self.frame = cv2.flip(self.frame, 0)
         return frame_time, self.frame
 
     def send_frame(self, frame):
         if self.test_display:
-            cv2.imshow("frame", self.frame)
-            cv2.imshow("image", frame)
-            #cv2.waitKey(0)
+            # cv2.imshow("frame", self.frame)
+            # cv2.imshow("image", frame)
+            cv2.waitKey(1)
         else:
             self.source.putFrame(frame)
 

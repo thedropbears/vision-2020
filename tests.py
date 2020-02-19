@@ -81,8 +81,8 @@ class UtilitiesTests(unittest.TestCase):
     )
 
     def test_scale_value(self):
-        self.assertAlmostEqual(.5, scale_value(0, -1.0, 1.0, 0.0, 1.0))
-        self.assertAlmostEqual(.25, scale_value(0, -1.0, 1.0, 0.0, 1.0, 2))
+        self.assertAlmostEqual(0.5, scale_value(0, -1.0, 1.0, 0.0, 1.0))
+        self.assertAlmostEqual(0.25, scale_value(0, -1.0, 1.0, 0.0, 1.0, 2))
 
     def test_contour_approx(self):
         for inputs, outputs in zip(self.TEST_INPUTS, self.TEST_OUTPUTS):
@@ -122,6 +122,7 @@ class UtilitiesTests(unittest.TestCase):
     def test_get_values_solvepnp(self):
         # TODO implement
         pass
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -42,12 +42,14 @@ PORT_POINTS = np.array(  # Converted to mm
     [(2.54 * i[0], 2.54 * i[1], 0) for i in PORT_POINTS], np.float32
 ).reshape((4, 1, 3))
 
-MIN_CONTOUR_AREA = 40
+MIN_CONTOUR_AREA = 50
 LOADING_INNER_OUTER_RATIO = 3.62
 LOADING_RECT_AREA_RATIO = 0.2
 
-POWER_PORT_AREA_RATIO = 0.2
-
+PP_MIN_CONTOUR_AREA = 50
+PP_MAX_CONTOUR_AREA = 1300
+PP_MIN_AREA_RATIO = 0.2
+PP_MAX_AREA_RATIO = 0.4
 
 FX = FOCAL_LENGTH * FRAME_WIDTH / SENSOR_WIDTH
 FY = FOCAL_LENGTH * FRAME_HEIGHT / SENSOR_HEIGHT
@@ -79,5 +81,7 @@ TARGET_HEIGHT_BOTTOM = 2.064
 TARGET_HEIGHT_TOP = 2.496
 GROUND_ANGLE = math.radians(20)
 
-ANGLE_SMOOTHING_AMOUNT = 0.3 # how much of the returned angle should be the last returned one
+ANGLE_SMOOTHING_AMOUNT = (
+    0.3  # how much of the returned angle should be the last returned one
+)
 DIST_SMOOTHING_AMOUNT = 0.8
