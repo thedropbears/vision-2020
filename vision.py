@@ -33,9 +33,11 @@ class Vision:
     ):
         # self.entries = entries
         # Memory Allocation
-        self.hsv = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
+        # Numpy takes Rows then Cols as dimensions. Height x Width
+        self.hsv = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
-        self.mask = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT), dtype=np.uint8)
+        self.display = self.hsv.copy()
+        self.mask = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH), dtype=np.uint8)
 
         # Camera Configuration
         self.CameraManager = CameraManager(
@@ -117,26 +119,64 @@ class Vision:
         return (0.0, 0.0)
 
     def find_power_port(self, frame: np.ndarray) -> tuple:
-        _, cnts, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # cv2.imshow('Mask', frame)
+
+        # frame = cv2.dilate(frame, None, dst=frame, iterations=1)
+        # frame = cv2.erode(frame, None, dst=frame, iterations=1)
+        # frame = cv2.erode(frame, None, dst=frame, iterations=1)
+
+        # cv2.imshow('After Ero/Dil', frame)
+
+        hullList = []
+        # Convert to RGB to draw contour on - shouldn't recreate every time
+        self.display = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR, dst=self.display)
+
+        cnts, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(cnts) >= 1:
             acceptable_cnts = []
+            # Check if the found contour is possibly a target
             for current_contour in enumerate(cnts):
                 area = cv2.contourArea(current_contour[1])
-                box = cv2.boundingRect(current_contour[1])
-                hull_area = cv2.contourArea(cv2.convexHull(current_contour[1]))
-                if (
-                    area > MIN_CONTOUR_AREA
-                    and area / hull_area > POWER_PORT_AREA_RATIO
-                    and box[2] > box[3]
-                ):
-                    acceptable_cnts.append(current_contour[1])
+                if PP_MAX_CONTOUR_AREA > area > PP_MIN_CONTOUR_AREA:
+                    box = cv2.boundingRect(current_contour[1])
+                    # Convex hull gives the bounding polygon of the contour with no
+                    # interior angles greater than 180deg
+                    hull = cv2.convexHull(current_contour[1])
+                    hull_area = cv2.contourArea(hull)
+                    # If the contour takes up more than X% of the Hull and
+                    # width greater than height
+                    if (
+                        PP_MAX_AREA_RATIO > area / hull_area > PP_MIN_AREA_RATIO
+                        and box[2] > box[3]
+                    ):
+                        # print(box) # X,Y,W,H
+                        # print("P %.2f, Area %d, Hull, %d" % (area / hull_area, area, hull_area))
+                        acceptable_cnts.append(current_contour[1])
+                        hullList.append(hull)
+
+            # ***This section of code displays the possible targets***
+            for i in range(len(acceptable_cnts)):
+                color_G = (0, 255, 0)
+                color_B = (255, 0, 0)
+                cv2.drawContours(self.display, acceptable_cnts, i, color_G)
+                cv2.drawContours(self.display, hullList, i, color_B)
 
             if acceptable_cnts:
-                power_port_contour = max(
-                    acceptable_cnts, key=lambda x: cv2.contourArea(x)
-                )
+                if len(acceptable_cnts) > 1:
+                    # Pick the largest found 'power port'
+                    power_port_contour = max(
+                        acceptable_cnts, key=lambda x: cv2.contourArea(x)
+                    )
+                else:
+                    power_port_contour = acceptable_cnts[0]
                 power_port_points = get_corners_from_contour(power_port_contour)
                 # x, y, w, h = cv2.boundingRect(power_port_contour)
+                for i in range(4):
+                    cv2.circle(
+                        self.display, tuple(power_port_points[i][0]), 3, (0, 0, 255)
+                    )
+                cv2.imshow("Display", self.display)
+                cv2.waitKey()
                 return power_port_points
             else:
                 return None
@@ -168,9 +208,6 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
-        # self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
-        # self.mask = cv2.dilate(self.mask, None, dst=self.mask, iterations=2)
-        # self.mask = cv2.erode(self.mask, None, dst=self.mask, iterations=1)
 
         power_port = self.find_power_port(self.mask)
         self.image = self.mask
@@ -184,10 +221,14 @@ class Vision:
             target_top = min(list(power_port[:, :, 1]))
             target_bottom = max(list(power_port[:, :, 1]))
             print("target top: ", target_top, " target bottom: ", target_bottom)
-            angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH/2)
+            angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2)
             vert_angles = [
-                get_vertical_angle_linear(target_bottom, FRAME_HEIGHT, MAX_FOV_HEIGHT/2, True),
-                get_vertical_angle_linear(target_top, FRAME_HEIGHT,  MAX_FOV_HEIGHT/2, True)
+                get_vertical_angle_linear(
+                    target_bottom, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
+                ),
+                get_vertical_angle_linear(
+                    target_top, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
+                ),
             ]
             distances = [
                 get_distance(
@@ -197,7 +238,7 @@ class Vision:
                     vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
                 ),
             ]
-            
+
             distance = distances[1]
             angle = vert_angles[1]
             print("angle: ", math.degrees(angle), " distance: ", distance)
@@ -232,6 +273,7 @@ class Vision:
                 self.CameraManager.sinks[0].getError()
             )
         else:
+            # Flip the image cause originally upside down.
             self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
             results = self.get_image_values(self.frame)
             if results is not None:
@@ -252,7 +294,7 @@ if __name__ == "__main__":
         testImgs = os.listdir("tests/power_port/")
 
         for im in testImgs:
-            print(im.split("m")[0] + "\t", end="")
+            # print(im.split("m")[0] + "\t", end="")
             camera_server = Vision(
                 test_img=cv2.imread("tests/power_port/" + im), test_display=True
             )
