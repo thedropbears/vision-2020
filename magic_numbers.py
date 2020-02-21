@@ -89,7 +89,3 @@ C920_2_DIST_COEFFS = np.array(
 
 ANGLE_SMOOTHING_AMOUNT = 0.3  # How much of the returned angle should be the last returned one
 DIST_SMOOTHING_AMOUNT = 0.8
-CAMERA_HEIGHT = 0.66
-TARGET_HEIGHT_BOTTOM = 2.064
-TARGET_HEIGHT_TOP = 2.496
-GROUND_ANGLE = math.radians(20)

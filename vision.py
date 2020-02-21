@@ -131,7 +131,7 @@ class Vision:
         # Convert to RGB to draw contour on - shouldn't recreate every time
         self.display = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR, dst=self.display)
 
-        cnts, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        _, cnts, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(cnts) >= 1:
             acceptable_cnts = []
             # Check if the found contour is possibly a target
@@ -220,7 +220,7 @@ class Vision:
 
             target_top = min(list(power_port[:, :, 1]))
             target_bottom = max(list(power_port[:, :, 1]))
-            print("target top: ", target_top, " target bottom: ", target_bottom)
+            # print("target top: ", target_top, " target bottom: ", target_bottom)
             angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2)
             vert_angles = [
                 get_vertical_angle_linear(
