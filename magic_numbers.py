@@ -19,9 +19,9 @@ MAX_ZOOM = 200
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 
-CAMERA_HEIGHT = 0.66 # in metres, off the ground
+CAMERA_HEIGHT = 0.913 # in metres, off the ground
 TARGET_HEIGHT_BOTTOM = 2.064 # in metres, off the ground
-TARGET_HEIGHT_TOP = 2.496 # in metres, off the ground
+TARGET_HEIGHT_TOP = 2.500 # in metres, off the ground (nominally 2.496 per specs)
 GROUND_ANGLE = math.radians(16.5) # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
