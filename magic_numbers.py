@@ -10,8 +10,8 @@ FOV_WIDTH = 1793
 FOV_HEIGHT = 2303
 FOV_DISTANCE = 2234
 
-MAX_FOV_WIDTH = math.atan2(FOV_WIDTH/2, FOV_DISTANCE) * 2 # 54.54 degrees
-MAX_FOV_HEIGHT = math.atan2(FOV_HEIGHT/2, FOV_DISTANCE) * 2 # 42.31 degrees
+MAX_FOV_WIDTH = math.atan2(FOV_WIDTH / 2, FOV_DISTANCE) * 2  # 54.54 degrees
+MAX_FOV_HEIGHT = math.atan2(FOV_HEIGHT / 2, FOV_DISTANCE) * 2  # 42.31 degrees
 
 MAX_ZOOM = 200
 
@@ -19,10 +19,10 @@ MAX_ZOOM = 200
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 
-CAMERA_HEIGHT = 0.913 # in metres, off the ground
-TARGET_HEIGHT_BOTTOM = 2.064 # in metres, off the ground
-TARGET_HEIGHT_TOP = 2.500 # in metres, off the ground (nominally 2.496 per specs)
-GROUND_ANGLE = math.radians(16.5) # Camera tilt, actually
+CAMERA_HEIGHT = 0.913  # in metres, off the ground
+TARGET_HEIGHT_BOTTOM = 2.064  # in metres, off the ground
+TARGET_HEIGHT_TOP = 2.500  # in metres, off the ground (nominally 2.496 per specs)
+GROUND_ANGLE = math.radians(16.5)  # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
 HSV_LOWER_BOUND = (60, 50, 15)
@@ -87,10 +87,11 @@ C920_2_DIST_COEFFS = np.array(
     [[0.13840045, -0.3277049, -0.00142985, -0.00095689, 0.28607425]], dtype=np.float32
 )
 
-ANGLE_SMOOTHING_AMOUNT = 0.3 # how much of the returned angle should be the last returned one
+ANGLE_SMOOTHING_AMOUNT = (
+    0.3  # how much of the returned angle should be the last returned one
+)
 DIST_SMOOTHING_AMOUNT = 0.8
 CAMERA_HEIGHT = 0.66
 TARGET_HEIGHT_BOTTOM = 2.064
 TARGET_HEIGHT_TOP = 2.496
 GROUND_ANGLE = math.radians(20)
-
