@@ -3,20 +3,26 @@ import math
 
 # Magic Numbers:
 
-# Camera parameters (fixed per-camera at a given zoom) These are for the
-# Logitechs
-FOCAL_LENGTH = 3.67  # mm
-SENSOR_WIDTH = 4.8  # mm
-SENSOR_HEIGHT = 3.6  # mm
+# The following were careful measurements of the frame area with the camera
+# aimed at a flat wall, and the distance of the camera from the wall. All are in
+# millimetres.
+FOV_WIDTH = 1793
+FOV_HEIGHT = 2303
+FOV_DISTANCE = 2234
 
-MAX_FOV_WIDTH = math.radians(53.51)  # 66.37
-MAX_FOV_HEIGHT = math.radians(41.11)  # 52.25
+MAX_FOV_WIDTH = math.atan2(FOV_WIDTH/2, FOV_DISTANCE) * 2 # 54.54 degrees
+MAX_FOV_HEIGHT = math.atan2(FOV_HEIGHT/2, FOV_DISTANCE) * 2 # 42.31 degrees
 
 MAX_ZOOM = 200
 
 # Camera settings
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
+
+CAMERA_HEIGHT = 0.66 # in metres, off the ground
+TARGET_HEIGHT_BOTTOM = 2.064 # in metres, off the ground
+TARGET_HEIGHT_TOP = 2.496 # in metres, off the ground
+GROUND_ANGLE = math.radians(16.5) # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
 HSV_LOWER_BOUND = (60, 50, 15)
@@ -48,6 +54,11 @@ LOADING_RECT_AREA_RATIO = 0.2
 
 POWER_PORT_AREA_RATIO = 0.2
 
+# Camera parameters (fixed per-camera at a given zoom) These are for the
+# Logitechs
+FOCAL_LENGTH = 3.67  # mm
+SENSOR_WIDTH = 4.8  # mm
+SENSOR_HEIGHT = 3.6  # mm
 
 FX = FOCAL_LENGTH * FRAME_WIDTH / SENSOR_WIDTH
 FY = FOCAL_LENGTH * FRAME_HEIGHT / SENSOR_HEIGHT
@@ -73,11 +84,6 @@ C920_2_INTR_MATRIX = np.array(
 C920_2_DIST_COEFFS = np.array(
     [[0.13840045, -0.3277049, -0.00142985, -0.00095689, 0.28607425]], dtype=np.float32
 )
-
-CAMERA_HEIGHT = 0.66
-TARGET_HEIGHT_BOTTOM = 2.064
-TARGET_HEIGHT_TOP = 2.496
-GROUND_ANGLE = math.radians(20)
 
 ANGLE_SMOOTHING_AMOUNT = 0.3 # how much of the returned angle should be the last returned one
 DIST_SMOOTHING_AMOUNT = 0.8
