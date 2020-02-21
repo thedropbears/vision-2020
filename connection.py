@@ -11,7 +11,7 @@ TIME_TO_PONG = 0.00000001
 
 
 class Connection:
-    def __init__(self, using_nt=False, test:bool = False):
+    def __init__(self, using_nt=False, test: bool = False):
         """Initialises Connection class.
 
         Args:

@@ -99,9 +99,7 @@ def get_corners_from_contour(contour: np.ndarray, corner_number=4) -> None:
 # at the camera coordinates' origin, and if True, has positive at the camera coordinates' origin.
 
 
-def get_vertical_angle(
-    y: int, intr_matrix:np.ndarray, inverted = False
-) -> float:
+def get_vertical_angle(y: int, intr_matrix: np.ndarray, inverted=False) -> float:
     """Get the vertical angle of a point to the camera's centre.
 
     Args:
@@ -117,11 +115,13 @@ def get_vertical_angle(
     else:
         return math.atan2(y - intr_matrix[1][2], intr_matrix[1][1])
 
-def get_vertical_angle_linear(y, frame_height, half_fov, inverted = False):
+
+def get_vertical_angle_linear(y, frame_height, half_fov, inverted=False):
     if inverted:
         return scale_value(y, 0, frame_height, half_fov, -half_fov)
     else:
         return scale_value(y, 0, frame_height, -half_fov, half_fov)
+
 
 def get_horizontal_angle(
     x: int, frame_width: int, half_fov: float, inverted=False

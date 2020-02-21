@@ -10,8 +10,8 @@ FOV_WIDTH = 1793
 FOV_HEIGHT = 2303
 FOV_DISTANCE = 2234
 
-MAX_FOV_WIDTH = math.atan2(FOV_WIDTH/2, FOV_DISTANCE) * 2 # 54.54 degrees
-MAX_FOV_HEIGHT = math.atan2(FOV_HEIGHT/2, FOV_DISTANCE) * 2 # 42.31 degrees
+MAX_FOV_WIDTH = math.atan2(FOV_WIDTH / 2, FOV_DISTANCE) * 2  # 54.54 degrees
+MAX_FOV_HEIGHT = math.atan2(FOV_HEIGHT / 2, FOV_DISTANCE) * 2  # 42.31 degrees
 
 MAX_ZOOM = 200
 
@@ -19,10 +19,10 @@ MAX_ZOOM = 200
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
 
-CAMERA_HEIGHT = 0.913 # in metres, off the ground
-TARGET_HEIGHT_BOTTOM = 2.064 # in metres, off the ground
-TARGET_HEIGHT_TOP = 2.500 # in metres, off the ground (nominally 2.496 per specs)
-GROUND_ANGLE = math.radians(16.5) # Camera tilt, actually
+CAMERA_HEIGHT = 0.913  # in metres, off the ground
+TARGET_HEIGHT_BOTTOM = 2.064  # in metres, off the ground
+TARGET_HEIGHT_TOP = 2.500  # in metres, off the ground (nominally 2.496 per specs)
+GROUND_ANGLE = math.radians(16.5)  # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
 HSV_LOWER_BOUND = (60, 50, 15)
@@ -48,17 +48,19 @@ PORT_POINTS = np.array(  # Converted to mm
     [(2.54 * i[0], 2.54 * i[1], 0) for i in PORT_POINTS], np.float32
 ).reshape((4, 1, 3))
 
-MIN_CONTOUR_AREA = 40
+MIN_CONTOUR_AREA = 50
 LOADING_INNER_OUTER_RATIO = 3.62
 LOADING_RECT_AREA_RATIO = 0.2
-
-POWER_PORT_AREA_RATIO = 0.2
 
 # Camera parameters (fixed per-camera at a given zoom) These are for the
 # Logitechs
 FOCAL_LENGTH = 3.67  # mm
 SENSOR_WIDTH = 4.8  # mm
 SENSOR_HEIGHT = 3.6  # mm
+PP_MIN_CONTOUR_AREA = 50
+PP_MAX_CONTOUR_AREA = 1300
+PP_MIN_AREA_RATIO = 0.2
+PP_MAX_AREA_RATIO = 0.4
 
 FX = FOCAL_LENGTH * FRAME_WIDTH / SENSOR_WIDTH
 FY = FOCAL_LENGTH * FRAME_HEIGHT / SENSOR_HEIGHT
@@ -85,5 +87,9 @@ C920_2_DIST_COEFFS = np.array(
     [[0.13840045, -0.3277049, -0.00142985, -0.00095689, 0.28607425]], dtype=np.float32
 )
 
-ANGLE_SMOOTHING_AMOUNT = 0.3 # how much of the returned angle should be the last returned one
+ANGLE_SMOOTHING_AMOUNT = 0.3  # How much of the returned angle should be the last returned one
 DIST_SMOOTHING_AMOUNT = 0.8
+CAMERA_HEIGHT = 0.66
+TARGET_HEIGHT_BOTTOM = 2.064
+TARGET_HEIGHT_TOP = 2.496
+GROUND_ANGLE = math.radians(20)
