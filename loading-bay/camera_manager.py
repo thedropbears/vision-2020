@@ -3,6 +3,7 @@ import json
 import cv2
 from magic_numbers import *
 from typing import List
+import sys
 
 
 class CameraManager:
@@ -93,7 +94,7 @@ class CameraManager:
 
         """
         print(error, file=sys.stderr)
-        self.CameraManager.source.notifyError(error)
+        self.source.notifyError(error)
 
 
 class MockImageManager:

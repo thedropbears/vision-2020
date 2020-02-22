@@ -1,6 +1,5 @@
 from connection import Connection
 from camera_manager import CameraManager
-import sys
 
 
 class Vision:
