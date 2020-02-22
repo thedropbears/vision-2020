@@ -1,14 +1,12 @@
 import unittest
 import cv2
 import numpy as np
-
-from connection import DummyConnection
 from vision import Vision
-from utilities.functions import get_corners_from_contour
+from utilities.functions import *
 
 
 class VisionTests(unittest.TestCase):
-    def test_sample_images(self):
+    def _test_sample_images(self):
         f = open("./tests/power_port/results.csv", "r")
         lines = f.read().split("\n")
         f.close()
@@ -49,17 +47,42 @@ class UtilitiesTests(unittest.TestCase):
     )
     TEST_OUTPUTS = np.array(
         [
-            [[[67, 40]], [[258, 43]], [[211, 160]], [[86, 146]]],
             [
-                [[66, 65]],
-                [[116, 50]],
-                [[152, 79]],
-                [[152, 121]],
-                [[100, 132]],
-                [[64, 116]],
+                np.array([[67, 40]], dtype=np.int32),
+                np.array([[258, 43]], dtype=np.int32),
+                np.array([[211, 160]], dtype=np.int32),
+                np.array([[86, 146]], dtype=np.int32),
+            ],
+            [
+                np.array([[66, 65]], dtype=np.int32),
+                np.array([[116, 50]], dtype=np.int32),
+                np.array([[150, 79]], dtype=np.int32),
+                np.array([[152, 121]], dtype=np.int32),
+                np.array([[100, 132]], dtype=np.int32),
+                np.array([[64, 116]], dtype=np.int32),
             ],
         ]
     )
+    INTR_MATRIX = np.array(
+        [[320, 0.0, 160], [0.0, 320, 120], [0.0, 0.0, 1.0]], dtype=np.float32
+    )
+
+    DIST_COEFFS = np.array(
+        [
+            [
+                1.27391079e-01,
+                -5.09404111e-01,
+                -7.87105714e-04,
+                2.60450896e-03,
+                1.04097100e00,
+            ]
+        ],
+        dtype=np.float32,
+    )
+
+    def test_scale_value(self):
+        self.assertAlmostEqual(0.5, scale_value(0, -1.0, 1.0, 0.0, 1.0))
+        self.assertAlmostEqual(0.25, scale_value(0, -1.0, 1.0, 0.0, 1.0, 2))
 
     def test_contour_approx(self):
         for inputs, outputs in zip(self.TEST_INPUTS, self.TEST_OUTPUTS):
@@ -73,7 +96,33 @@ class UtilitiesTests(unittest.TestCase):
                 )
             )
 
+    def test_get_angles(self):
+        self.assertAlmostEqual(
+            math.radians(45), get_horizontal_angle(100, 100, math.radians(45))
+        )
+        self.assertAlmostEqual(
+            math.radians(30),
+            get_vertical_angle_linear(100, 400, math.radians(60), inverted=True),
+        )
+        self.assertAlmostEqual(
+            math.radians(-30),
+            get_vertical_angle_linear(300, 400, math.radians(60), inverted=True),
+        )
+
+    def test_get_distance(self):
+        self.assertAlmostEqual(-1.0, get_distance(math.radians(-45), 2, 1, 0))
+        self.assertAlmostEqual(1.0, get_distance(0, 3, 2, math.radians(45)))
+        self.assertAlmostEqual(
+            1.0, get_distance(math.radians(20), 3, 2, math.radians(25))
+        )
+        self.assertAlmostEqual(
+            math.sqrt(3), get_distance(math.radians(10), 4, 3, math.radians(20))
+        )
+
+    def test_get_values_solvepnp(self):
+        # TODO implement
+        pass
+
 
 if __name__ == "__main__":
-    camera_server = Vision(DummyConnection())
     unittest.main()

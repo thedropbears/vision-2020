@@ -9,15 +9,15 @@ import cv2
 class CameraManager:
     CONFIG_FILE_PATH = "/boot/frc.json"
 
-    def __init__(self, test_img=None, test_video=None, test_display=False):
+    def __init__(self, test_img=[], test_video=[], test_display=False):
         self.testing = False
         self.frame = None
         self.video = None
         self.test_display = test_display
-        if not type(test_img) == type(None):
+        if len(test_img) > 0:
             self.testing = True
             self.frame = test_img
-        elif not type(test_video) == type(None):
+        elif len(test_video) > 0:
             self.testing = True
             self.video = test_video
         else:
@@ -31,7 +31,7 @@ class CameraManager:
                 for camera_config in self.camera_configs
             ]
             for prop in self.cameras[0].enumerateProperties():
-                print(prop.getName())
+                print(prop.getName(), prop.getKind())
 
             self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
             self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
@@ -45,6 +45,7 @@ class CameraManager:
         """
         with open(self.CONFIG_FILE_PATH) as json_file:
             j = json.load(json_file)
+            print(j)
 
         cameras = j["cameras"]
         cameras = [
@@ -70,13 +71,14 @@ class CameraManager:
             else:
                 return 1, self.frame
         frame_time, self.frame = self.sinks[camera].grabFrameNoTimeout(image=self.frame)
+        # self.frame = cv2.flip(self.frame, 0)
         return frame_time, self.frame
 
     def send_frame(self, frame):
         if self.test_display:
-            cv2.imshow("frame", self.frame)
-            cv2.imshow("image", frame)
-            cv2.waitKey(0)
+            # cv2.imshow("frame", self.frame)
+            # cv2.imshow("image", frame)
+            cv2.waitKey(1)
         else:
             self.source.putFrame(frame)
 
