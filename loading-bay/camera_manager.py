@@ -126,7 +126,12 @@ class DummyVideoManager:
             Whether or not it was successful. False means error.
             The next frame of self.video.
         """
-        return self.video.read()
+        result = self.video.read()
+        if result[0]:
+            return result
+        else:  # If we reach the end of the video, go back to the beginning.
+            self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            return self.get_frame()
 
     def send_frame(self, frame: np.ndarray) -> None:
         ...
