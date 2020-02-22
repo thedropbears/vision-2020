@@ -22,7 +22,8 @@ FRAME_HEIGHT = 240
 CAMERA_HEIGHT = 0.913  # in metres, off the ground
 TARGET_HEIGHT_BOTTOM = 2.064  # in metres, off the ground
 TARGET_HEIGHT_TOP = 2.500  # in metres, off the ground (nominally 2.496 per specs)
-GROUND_ANGLE = math.radians(16.5)  # Camera tilt, actually
+TILT_CORRECTION = 2.289 # Degrees, measured delta at 10 metres. Provisional.
+GROUND_ANGLE = math.radians(16.5 + TILT_CORRECTION)  # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
 HSV_LOWER_BOUND = (60, 50, 15)
