@@ -75,6 +75,17 @@ class CameraManager:
         """
         self.source.putFrame(frame)
 
+    def get_error(self, camera: int = 0) -> str:
+        """Gets an error from the camera.
+        Should be run by Vision when frame_time is 0.
+
+        Args:
+            camera: Which camera to get the error from.
+        Returns:
+            A string containing the camera's error.
+        """
+        return self.sinks[camera].getError()
+
 
 class DummyImageManager:
     def __init__(self, image: np.ndarray) -> None:
@@ -107,6 +118,9 @@ class DummyImageManager:
     def send_frame(self, frame: np.ndarray):
         ...
 
+    def get_error(self, camera: int = 0) -> str:
+        return "Error"
+
 
 class DummyVideoManager:
     def __init__(self, video: cv2.VideoCapture):
@@ -136,6 +150,9 @@ class DummyVideoManager:
     def send_frame(self, frame: np.ndarray) -> None:
         ...
 
+    def get_error(self, camera: int = 0) -> str:
+        return "Error"
+
 
 class DummyCameraManager:
     def __init__(self, camera: int = 0) -> None:
@@ -160,3 +177,7 @@ class DummyCameraManager:
 
     def send_frame(self, frame: np.ndarray) -> None:
         ...
+
+    def get_error(self, camera: int = 0) -> str:
+        return "Error"
+
