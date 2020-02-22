@@ -163,7 +163,7 @@ class MockVideoManager:
             return result
         else:  # If we reach the end of the video, go back to the beginning.
             self.video.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            return self.get_frame()
+            return self.video.read()
 
     def send_frame(self, frame: np.ndarray) -> None:
         ...
