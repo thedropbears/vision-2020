@@ -129,3 +129,4 @@ class DummyCameraManager:
             camera: Not needed, just here to ensure similarity with CameraManager.
         Returns:
             The current video frame.
+        """
