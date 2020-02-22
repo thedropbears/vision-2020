@@ -58,9 +58,13 @@ class CameraManager:
         """Gets a frame from the specified camera.
 
         Args:
-            camera: Which camera to get the frame from. Default is 0
+            camera: Which camera to get the frame from. Default is 0.
         Returns:
-            A numpy array of the frame, dtype=np.uint8, BGR
+            Frame_time, or 0 on error.
+            A numpy array of the frame, dtype=np.uint8, BGR.
+        """
+        frame_time, self.frame = self.sinks[camera].grabFrameNoTimeout(image=self.frame)
+        return frame_time, self.frame
         """
         return np.zeros((320, 240, 3), np.uint8)
 
