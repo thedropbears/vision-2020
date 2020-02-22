@@ -86,6 +86,15 @@ class CameraManager:
         """
         return self.sinks[camera].getError()
 
+    def notify_error(self, error: str) -> None:
+        """Sends an error to the console and the source.
+        Args:
+            error: The string to send. Should be gotten by get_error().
+
+        """
+        print(error, file=sys.stderr)
+        self.CameraManager.source.notifyError(error)
+
 
 class DummyImageManager:
     def __init__(self, image: np.ndarray) -> None:
@@ -121,6 +130,14 @@ class DummyImageManager:
     def get_error(self, camera: int = 0) -> str:
         return "Error"
 
+    def notify_error(self, error: str) -> None:
+        """Prints an error to the console.
+        Args:
+            error: The string to print.
+
+        """
+        print(error, file=sys.stderr)
+
 
 class DummyVideoManager:
     def __init__(self, video: cv2.VideoCapture):
@@ -153,6 +170,14 @@ class DummyVideoManager:
     def get_error(self, camera: int = 0) -> str:
         return "Error"
 
+    def notify_error(self, error: str) -> None:
+        """Prints an error to the console.
+        Args:
+            error: The string to print.
+
+        """
+        print(error, file=sys.stderr)
+
 
 class DummyCameraManager:
     def __init__(self, camera: int = 0) -> None:
@@ -180,4 +205,12 @@ class DummyCameraManager:
 
     def get_error(self, camera: int = 0) -> str:
         return "Error"
+
+    def notify_error(self, error: str) -> None:
+        """Prints an error to the console.
+        Args:
+            error: The string to print.
+
+        """
+        print(error, file=sys.stderr)
 

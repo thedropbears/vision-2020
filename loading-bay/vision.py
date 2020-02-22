@@ -1,5 +1,6 @@
 from connection import Connection
 from camera_manager import CameraManager
+import sys
 
 
 class Vision:
@@ -10,5 +11,5 @@ class Vision:
         frame_time, self.frame = self.camera_manager.get_frame()
         if not frame_time:
             error = self.camera_manager.get_error()
-            print(error, sys.stderr)
+            self.camera_manager.notify_error(error)
 
