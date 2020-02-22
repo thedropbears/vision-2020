@@ -52,10 +52,10 @@ class Vision:
 
         self.Connection = Connection(using_nt=using_nt, test=self.testing)
 
-        self.avg_angle = 0
+        self.avg_horiz_angle = 0
         self.avg_dist = 0
         self.prev_dist = 0
-        self.prev_angle = 0
+        self.prev_horiz_angle = 0
 
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
@@ -188,7 +188,7 @@ class Vision:
     ):
         for i in range(len(points)):
             cv2.circle(frame, (points[i][0][0], points[i][0][1]), 5, (0, 255, 0))
-        if printing == True:
+        if printing:
             print(points)
 
     def get_mid(self, contour: np.ndarray) -> tuple:
@@ -214,14 +214,14 @@ class Vision:
 
         if power_port is not None:
             self.prev_dist = self.avg_dist
-            self.prev_angle = self.avg_angle
+            self.prev_horiz_angle = self.avg_horiz_angle
             self.create_annotated_display(frame, power_port)
             midX = self.get_mid(power_port)
 
             target_top = min(list(power_port[:, :, 1]))
             target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
-            angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2)
+            horiz_angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2)
             vert_angles = [
                 get_vertical_angle_linear(
                     target_bottom, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
@@ -240,21 +240,21 @@ class Vision:
             ]
 
             distance = distances[1]
-            angle = vert_angles[1]
-            print("angle: ", math.degrees(angle), " distance: ", distance)
+            vert_angle = vert_angles[1]
+            print("angle: ", math.degrees(vert_angle), " distance: ", distance)
 
             self.avg_dist = (
                 distance * (1 - DIST_SMOOTHING_AMOUNT)
                 + self.prev_dist * DIST_SMOOTHING_AMOUNT
             )
-            self.avg_angle = (
-                angle * (1 - ANGLE_SMOOTHING_AMOUNT)
-                + self.prev_angle * ANGLE_SMOOTHING_AMOUNT
+            self.avg_horiz_angle = (
+                horiz_angle * (1 - ANGLE_SMOOTHING_AMOUNT)
+                + self.prev_horiz_angle * ANGLE_SMOOTHING_AMOUNT
             )
             if self.testing:
-                return (distance, angle)
+                return (distance, horiz_angle)
             else:
-                return (self.avg_dist, self.avg_angle)
+                return (self.avg_dist, self.avg_horiz_angle)
         else:
             return None
 
