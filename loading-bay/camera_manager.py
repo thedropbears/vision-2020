@@ -110,7 +110,7 @@ class MockImageManager:
         """Changes self.image.
 
         Args:
-            new_image: The new image to switch to.
+            new_image: The new image to switch to. Should be a numpy image array.
         """
         self.image = new_image
 
