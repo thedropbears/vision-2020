@@ -180,9 +180,9 @@ class MockVideoManager:
         print(error, file=sys.stderr)
 
 
-class MockCameraManager:
+class WebcamCameraManager:
     def __init__(self, camera: int = 0) -> None:
-        """Initialises a Mock Camera Manager. Designed to run on a non-pi computer.
+        """Initialises a Webcam Camera Manager. Designed to run on a non-pi computer.
         Initialises it with the first detected system camera, for example a webcam.
         
         Args:
