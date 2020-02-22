@@ -65,8 +65,14 @@ class CameraManager:
         """
         frame_time, self.frame = self.sinks[camera].grabFrameNoTimeout(image=self.frame)
         return frame_time, self.frame
+
+    def send_frame(self, frame: np.ndarray):
+        """Sends a frame to the driver display.
+
+        Args:
+            frame: A numpy array image. (Should always be the same size)
         """
-        return np.zeros((320, 240, 3), np.uint8)
+        self.source.putFrame(frame)
 
 
 class DummyImageManager:
