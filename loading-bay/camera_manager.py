@@ -96,9 +96,9 @@ class CameraManager:
         self.CameraManager.source.notifyError(error)
 
 
-class DummyImageManager:
+class MockImageManager:
     def __init__(self, image: np.ndarray) -> None:
-        """Initialises a Dummy Image Manager
+        """Initialises a Mock Image Manager
 
         Args:
             image: A BGR numpy image array
@@ -139,9 +139,9 @@ class DummyImageManager:
         print(error, file=sys.stderr)
 
 
-class DummyVideoManager:
+class MockVideoManager:
     def __init__(self, video: cv2.VideoCapture):
-        """Initialises a Dummy Video Manager.
+        """Initialises a Mock Video Manager.
 
         Args:
             video: An opencv video, as received by cv2.VideoCapture
@@ -179,9 +179,9 @@ class DummyVideoManager:
         print(error, file=sys.stderr)
 
 
-class DummyCameraManager:
+class MockCameraManager:
     def __init__(self, camera: int = 0) -> None:
-        """Initialises a Dummy Camera Manager. Designed to run on a non-pi computer.
+        """Initialises a Mock Camera Manager. Designed to run on a non-pi computer.
         Initialises it with the first detected system camera, for example a webcam.
         
         Args:
