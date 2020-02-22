@@ -22,7 +22,7 @@ class CameraManager:
         self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
         self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
 
-        self.frame = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
+        self.frame = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
 
     def read_config_JSON(self) -> List[dict]:
         """Reads camera config JSON.
