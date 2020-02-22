@@ -2,12 +2,13 @@ import numpy as np
 import json
 import cv2
 from magic_numbers import *
+from typing import List
 
 
 class CameraManager:
     CONFIG_FILE_PATH = "/boot/frc.json"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialises a Camera Manager"""
         from cscore import CameraServer
 
@@ -23,7 +24,7 @@ class CameraManager:
 
         self.frame = np.zeros(shape=(FRAME_WIDTH, FRAME_HEIGHT, 3), dtype=np.uint8)
 
-    def read_config_JSON(self) -> list:
+    def read_config_JSON(self) -> List[dict]:
         """Reads camera config JSON.
 
         Returns:
@@ -54,7 +55,7 @@ class CameraManager:
         camera.setConfigJson(json.dumps(config["config"]))
         return camera
 
-    def get_frame(self, camera: int = 0):
+    def get_frame(self, camera: int = 0) -> tuple:
         """Gets a frame from the specified camera.
 
         Args:
@@ -66,7 +67,7 @@ class CameraManager:
         frame_time, self.frame = self.sinks[camera].grabFrameNoTimeout(image=self.frame)
         return frame_time, self.frame
 
-    def send_frame(self, frame: np.ndarray):
+    def send_frame(self, frame: np.ndarray) -> None:
         """Sends a frame to the driver display.
 
         Args:
@@ -76,7 +77,7 @@ class CameraManager:
 
 
 class DummyImageManager:
-    def __init__(self, image: np.ndarray):
+    def __init__(self, image: np.ndarray) -> None:
         """Initialises a Dummy Image Manager
 
         Args:
@@ -84,7 +85,7 @@ class DummyImageManager:
         """
         self.image = image
 
-    def change_image(self, new_image: np.ndarray):
+    def change_image(self, new_image: np.ndarray) -> None:
         """Changes self.image.
 
         Args:
@@ -92,15 +93,16 @@ class DummyImageManager:
         """
         self.image = new_image
 
-    def get_frame(self, camera: int = 0):
+    def get_frame(self, camera: int = 0) -> tuple:
         """Returns self.image.
 
         Args:
             camera: Not needed, just here to ensure similarity with CameraManager.
         Returns:
+            0.1: Simulates the frame_time
             self.image, a BGR numpy array.
         """
-        return self.image
+        return 0.1, self.image
 
     def send_frame(self, frame: np.ndarray):
         ...
@@ -115,22 +117,23 @@ class DummyVideoManager:
         """
         self.video = video
 
-    def get_frame(self, camera: int = 0):
+    def get_frame(self, camera: int = 0) -> tuple:
         """Returns the next frame of self.video.
 
         Args:
             camera: Not needed, just here to ensure similarity with CameraManager.
         Returns:
+            Whether or not it was successful. False means error.
             The next frame of self.video.
         """
-        return self.video.read()[1]
+        return self.video.read()
 
-    def send_frame(self, frame: np.ndarray):
+    def send_frame(self, frame: np.ndarray) -> None:
         ...
 
 
 class DummyCameraManager:
-    def __init__(self, camera: int = 0):
+    def __init__(self, camera: int = 0) -> None:
         """Initialises a Dummy Camera Manager. Designed to run on a non-pi computer.
         Initialises it with the first detected system camera, for example a webcam.
         
@@ -139,14 +142,16 @@ class DummyCameraManager:
         """
         self.video = cv2.VideoCapture(camera)
 
-    def get_frame(self, camera: int = 0):
+    def get_frame(self, camera: int = 0) -> tuple:
         """Returns the current video frame.
 
         Args:
             camera: Not needed, just here to ensure similarity with CameraManager.
         Returns:
+            Whether or not it was successful. False means error.
             The current video frame.
         """
+        return self.video.read()
 
-    def send_frame(self, frame: np.ndarray):
+    def send_frame(self, frame: np.ndarray) -> None:
         ...
