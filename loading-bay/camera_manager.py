@@ -22,7 +22,8 @@ class CameraManager:
 
         self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
         self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
-
+        # Width and Height are reversed here because the order of putVideo's width and height
+        # parameters are the opposite of numpy's (technically it is an array, not an actual image).
         self.frame = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
 
     def read_config_JSON(self) -> List[dict]:
