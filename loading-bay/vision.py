@@ -27,5 +27,8 @@ class Vision:
             distance, angle = results
             self.connection.send_results((distance, angle, time.monotonic()))
 
+        self.camera_manager.send_frame(self.image)
+
     def get_image_values(self, frame: np.ndarray):
+        self.image = self.frame
         return None
