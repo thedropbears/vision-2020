@@ -148,11 +148,11 @@ class Vision:
                     if (
                         PP_MAX_AREA_RATIO > area / hull_area > PP_MIN_AREA_RATIO
                         and box[2] > box[3]
-                    ):
-                        # print(box) # X,Y,W,H
-                        # print("P %.2f, Area %d, Hull, %d" % (area / hull_area, area, hull_area))
-                        acceptable_cnts.append(current_contour[1])
-                        hullList.append(hull)
+                    ):  
+                        contour_corners = get_corners_from_contour(current_contour[1])
+                        if (len(contour_corners) == 4):
+                            acceptable_cnts.append(current_contour[1])
+                            hullList.append(hull)
 
             # ***This section of code displays the possible targets***
             for i in range(len(acceptable_cnts)):
@@ -281,7 +281,7 @@ class Vision:
                 self.Connection.send_results(
                     (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
-            self.CameraManager.send_frame(self.image)
+            self.CameraManager.send_frame(self.display)
 
 
 if __name__ == "__main__":
