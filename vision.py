@@ -221,7 +221,7 @@ class Vision:
             target_top = min(list(power_port[:, :, 1]))
             target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
-            horiz_angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2)
+            horiz_angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2, True)
             vert_angles = [
                 get_vertical_angle_linear(
                     target_bottom, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
