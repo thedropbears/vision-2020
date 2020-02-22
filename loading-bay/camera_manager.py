@@ -102,6 +102,9 @@ class DummyImageManager:
         """
         return self.image
 
+    def send_frame(self, frame: np.ndarray):
+        ...
+
 
 class DummyVideoManager:
     def __init__(self, video: cv2.VideoCapture):
@@ -122,6 +125,10 @@ class DummyVideoManager:
         """
         return self.video.read()[1]
 
+    def send_frame(self, frame: np.ndarray):
+        ...
+
+
 class DummyCameraManager:
     def __init__(self, camera: int = 0):
         """Initialises a Dummy Camera Manager. Designed to run on a non-pi computer.
@@ -140,3 +147,6 @@ class DummyCameraManager:
         Returns:
             The current video frame.
         """
+
+    def send_frame(self, frame: np.ndarray):
+        ...
