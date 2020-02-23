@@ -3,7 +3,8 @@
 import socket
 import time
 
-from typing import Protocol, Tuple
+from typing import Tuple
+from typing_extensions import Protocol
 
 from networktables import NetworkTablesInstance
 
