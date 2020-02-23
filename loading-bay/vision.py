@@ -94,3 +94,11 @@ class Vision:
         ):
             return False, inner, outer
         return True, inner, outer
+
+    def draw_contour_pair(self, inner: dict, outer: dict) -> None:
+        self.image = cv2.drawContours(
+            self.image, inner["rect"].reshape((1, 4, 2)), -1, (255, 0, 0), thickness=2
+        )
+        self.image = cv2.drawContours(
+            self.image, outer["rect"].reshape((1, 4, 2)), -1, (0, 0, 255), thickness=2
+        )
