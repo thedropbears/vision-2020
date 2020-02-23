@@ -26,7 +26,6 @@ class Vision:
             error = self.camera_manager.get_error()
             self.camera_manager.notify_error(error)
             return
-
         self.frame = cv2.rotate(self.frame, cv2.ROTATE_180, dst=self.frame)
         results = self.get_image_values(self.frame)
 
