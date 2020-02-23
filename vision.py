@@ -272,7 +272,7 @@ class Vision:
             results = self.get_image_values(self.frame)
             if results is not None:
                 distance, angle = results
-                self.Connection.send_results(
+                self.connection.send_results(
                     (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
             self.CameraManager.send_frame(self.image)
