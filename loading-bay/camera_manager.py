@@ -124,10 +124,11 @@ class MockImageManager:
             0.1: Simulates the frame_time
             self.image, a BGR numpy array.
         """
-        return 0.1, self.image
+        return 0.1, self.image.copy()
 
     def send_frame(self, frame: np.ndarray):
-        ...
+        cv2.imshow("Image", frame)
+        cv2.waitKey(0)
 
     def get_error(self, camera: int = 0) -> str:
         return "Error"
@@ -203,7 +204,8 @@ class WebcamCameraManager:
         return self.video.read()
 
     def send_frame(self, frame: np.ndarray) -> None:
-        ...
+        cv2.imshow("image", frame)
+        cv2.waitKey(1)
 
     def get_error(self, camera: int = 0) -> str:
         return "Error"
