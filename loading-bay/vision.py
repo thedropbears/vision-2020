@@ -16,6 +16,8 @@ class Vision:
         self.camera_manager = camera_manager
 
         self.image = np.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), np.uint8)
+        self.mask = np.zeros((FRAME_HEIGHT, FRAME_WIDTH), np.uint8)
+        self.hsv = np.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), np.uint8)
 
     def run(self) -> None:
         """Run the main vision loop once."""
