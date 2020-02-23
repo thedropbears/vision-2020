@@ -12,9 +12,8 @@ import math
 
 
 class Vision:
-    def __init__(self, connection: Connection, camera_manager: CameraManager) -> None:
+    def __init__(self, camera_manager: CameraManager) -> None:
         self.camera_manager = camera_manager
-        self.connection = connection
 
         self.image = np.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), np.uint8)
 
