@@ -102,3 +102,10 @@ class Vision:
         self.image = cv2.drawContours(
             self.image, outer["rect"].reshape((1, 4, 2)), -1, (0, 0, 255), thickness=2
         )
+
+
+if __name__ == "__main__":
+    vision = Vision(CameraManager())
+    while True:
+        vision.run()
+
