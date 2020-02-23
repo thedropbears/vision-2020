@@ -1,8 +1,14 @@
-from connection import Connection
 from camera_manager import CameraManager
+from magic_numbers import *
+from utilities.functions import (
+    get_corners_from_contour,
+    get_values_solvepnp,
+    order_rectangle,
+)
 import cv2
 import numpy as np
 import time
+import math
 
 
 class Vision:
