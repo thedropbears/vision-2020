@@ -37,7 +37,66 @@ class Vision:
         self.camera_manager.send_frame(self.image)
 
     def get_image_values(self, frame: np.ndarray):
-        self.image = self.frame
+        self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
+        self.mask = cv2.inRange(
+            self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
+        )
+        self.image = frame.copy()
+
+        _, cnts, hierarchy = cv2.findContours(
+            self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
+        )
+
+        cnts = np.array(cnts)
+
+        if not len(cnts):
+            return None
+
+        hierarchy = np.array(hierarchy[0])
+        inner_rects = {}
+        outer_rects = {}
+
+        for i, cnt in enumerate(cnts):
+            # The 3rd (4th) element of hierarchy is its parent.
+            # When parent is -1, it has no parent and therefore it an outer rectangle.
+            if hierarchy[i][3] == -1:
+                outer_rects[i] = {"contour": cnt, "hierarchy": hierarchy[i]}
+            else:
+                inner_rects[i] = {"contour": cnt, "hierarchy": hierarchy[i]}
+
+        if not (inner_rects and outer_rects):
+            return None
+
+        good_pairs = []
+        for i in inner_rects:
+            inner_rects[i]["area"] = cv2.contourArea(inner_rects[i]["contour"])
+            if inner_rects[i]["area"] > MIN_CONTOUR_AREA:
+                parent = outer_rects[inner_rects[i]["hierarchy"][3]]
+                success, inner, outer = self.test_contour_pair(inner_rects[i], parent)
+                if success:
+                    good_pairs.append((inner_rects[i], parent))
+
+        if not good_pairs:
+            return None
+
+        for inner, outer in good_pairs:
+            self.draw_contour_pair(inner, outer)
+
+        ordered_points = np.concatenate(
+            (
+                order_rectangle(outer["rect"], inverted=True),
+                order_rectangle(inner["rect"], inverted=True),
+            )
+        )
+        print(
+            get_values_solvepnp(
+                ordered_points.astype(np.float32),
+                LOADING_BAY_POINTS,
+                C920_2_INTR_MATRIX,
+                C920_2_DIST_COEFFS,
+            )
+        )
+
         return None
 
     def test_contour_pair(self, inner: dict, outer: dict) -> bool:
