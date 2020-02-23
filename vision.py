@@ -56,6 +56,7 @@ class Vision:
         self.avg_dist = 0
         self.prev_dist = 0
         self.prev_horiz_angle = 0
+        self.old_fps_time = 0
 
     def find_loading_bay(self, frame: np.ndarray):
         cnts, hierarchy = cv2.findContours(
@@ -276,6 +277,13 @@ class Vision:
             # Flip the image cause originally upside down.
             self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
             results = self.get_image_values(self.frame)
+
+            if self.Connection.using_nt:
+                self.time = time.monotonic()
+                self.fps = 1/(self.time-self.old_fps_time)
+                self.old_fps_time = self.time
+                self.Connection.fps_entry.setDouble(self.fps)
+
             if results is not None:
                 distance, angle = results
                 self.Connection.send_results(

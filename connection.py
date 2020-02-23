@@ -42,6 +42,7 @@ class Connection:
         self.ping = self.nt.getEntry("ping")
         self.raspi_pong = self.nt.getEntry("raspi_pong")
         self.rio_pong = self.nt.getEntry("rio_pong")
+        self.fps_entry = self.nt.getEntry("fps")
 
         self.old_ping_time = 0
 
@@ -58,6 +59,7 @@ class Connection:
         if self.test:
             pass
         elif self.using_nt:
+
             self.entry.setDoubleArray(results)
             NetworkTables.flush()
         else:
