@@ -45,7 +45,6 @@ class Connection:
         self.fps_entry = self.nt.getEntry("fps")
 
         self.old_ping_time = 0
-        self.old_fps_time = 0
 
     def init_UDP_connection(self):
         """Initialises UDP connection to the RIO"""
@@ -60,10 +59,6 @@ class Connection:
         if self.test:
             pass
         elif self.using_nt:
-            self.time = time.monotonic()
-            self.fps = 1/(self.time-self.old_fps_time)
-            self.old_fps_time = self.time
-            self.fps_entry.setDouble(self.fps)
 
             self.entry.setDoubleArray(results)
             NetworkTables.flush()
