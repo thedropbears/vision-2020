@@ -31,7 +31,6 @@ class Vision:
 
         if results is not None:
             distance, angle = results
-            self.connection.send_results((distance, angle, time.monotonic()))
 
         self.camera_manager.send_frame(self.image)
 
