@@ -90,16 +90,15 @@ class Vision:
                 order_rectangle(inner["rect"], inverted=True),
             )
         )
-        print(
-            get_values_solvepnp(
-                ordered_points.astype(np.float32),
-                LOADING_BAY_POINTS,
-                C920_2_INTR_MATRIX,
-                C920_2_DIST_COEFFS,
-            )
+        results = get_values_solvepnp(
+            ordered_points.astype(np.float32),
+            LOADING_BAY_POINTS,
+            C920_2_INTR_MATRIX,
+            C920_2_DIST_COEFFS,
         )
+        print(results)
 
-        return None
+        return results
 
     def test_contour_pair(self, inner: dict, outer: dict) -> bool:
         """Test if a given contour pair is a valid loading bay.
