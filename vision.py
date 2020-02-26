@@ -36,7 +36,6 @@ class Vision:
         # Numpy takes Rows then Cols as dimensions. Height x Width
         self.hsv = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
         self.image = self.hsv.copy()
-        self.display = self.hsv.copy()
         self.mask = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH), dtype=np.uint8)
 
         # Camera Configuration
@@ -129,7 +128,7 @@ class Vision:
 
         hullList = []
         # Convert to RGB to draw contour on - shouldn't recreate every time
-        self.display = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR, dst=self.display)
+        self.image = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR, dst=self.image)
 
         _, cnts, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if len(cnts) >= 1:
@@ -158,8 +157,8 @@ class Vision:
             for i in range(len(acceptable_cnts)):
                 color_G = (0, 255, 0)
                 color_B = (255, 0, 0)
-                cv2.drawContours(self.display, acceptable_cnts, i, color_G)
-                cv2.drawContours(self.display, hullList, i, color_B)
+                cv2.drawContours(self.image, acceptable_cnts, i, color_G)
+                cv2.drawContours(self.image, hullList, i, color_B)
 
             if acceptable_cnts:
                 if len(acceptable_cnts) > 1:
@@ -173,7 +172,7 @@ class Vision:
                 # x, y, w, h = cv2.boundingRect(power_port_contour)
                 for i in range(4):
                     cv2.circle(
-                        self.display, tuple(power_port_points[i][0]), 3, (0, 0, 255)
+                        self.image, tuple(power_port_points[i][0]), 3, (0, 0, 255)
                     )
                 # cv2.imshow("Display", self.display)
                 # cv2.waitKey()
@@ -281,7 +280,7 @@ class Vision:
                 self.Connection.send_results(
                     (distance, angle, time.monotonic())
                 )  # distance (meters), angle (radians), timestamp
-            self.CameraManager.send_frame(self.display)
+            self.CameraManager.send_frame(self.image)
 
 
 if __name__ == "__main__":
