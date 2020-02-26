@@ -28,7 +28,7 @@ class CameraManager:
         # parameters are the opposite of numpy's (technically it is an array, not an actual image).
         self.frame = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
 
-    def read_config_JSON(self) -> List[dict]:
+    def read_config_JSON(self) -> List[Dict["name", str, "path", str, "config", dict]]:
         """Reads camera config JSON.
 
         Returns:
