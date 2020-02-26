@@ -1,8 +1,7 @@
 import numpy as np
 import json
 import cv2
-from magic_numbers import *
-from typing import List
+from typing import List, Tuple, Dict
 import sys
 
 
@@ -47,7 +46,7 @@ class CameraManager:
 
         return cameras
 
-    def start_camera(self, config: dict):
+    def start_camera(self, config: Dict["name", str, "path", str, "config", dict]):
         """Initialises a camera.
 
         Args:
@@ -60,7 +59,7 @@ class CameraManager:
         camera.setConfigJson(json.dumps(config["config"]))
         return camera
 
-    def get_frame(self, camera: int = 0) -> tuple:
+    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
         """Gets a frame from the specified camera.
 
         Args:
@@ -120,7 +119,7 @@ class MockImageManager:
         """
         self.image = new_image
 
-    def get_frame(self, camera: int = 0) -> tuple:
+    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
         """Returns self.image.
 
         Args:
@@ -156,7 +155,7 @@ class MockVideoManager:
         """
         self.video = video
 
-    def get_frame(self, camera: int = 0) -> tuple:
+    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
         """Returns the next frame of self.video.
 
         Args:
@@ -197,7 +196,7 @@ class WebcamCameraManager:
         """
         self.video = cv2.VideoCapture(camera)
 
-    def get_frame(self, camera: int = 0) -> tuple:
+    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
         """Returns the current video frame.
 
         Args:
