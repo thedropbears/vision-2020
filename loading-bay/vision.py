@@ -136,12 +136,12 @@ class Vision:
 
         inner["rect"] = get_corners_from_contour(inner["contour"])
 
-        if not len(inner["rect"] == 4):
+        if not len(inner["rect"]) == 4:
             return False, inner, outer
 
         outer["rect"] = get_corners_from_contour(outer["contour"])
 
-        if not len(outer["rect"] == 4):
+        if not len(outer["rect"]) == 4:
             return False, inner, outer
 
         if not (
