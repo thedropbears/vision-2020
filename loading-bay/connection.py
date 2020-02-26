@@ -1,5 +1,6 @@
-from networktables import NetworkTablesInstance
+import time
 
+from networktables import NetworkTablesInstance
 from typing import Tuple
 
 NetworkTables = NetworkTablesInstance.getDefault()
