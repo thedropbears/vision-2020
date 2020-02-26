@@ -20,8 +20,11 @@ class CameraManager:
             self.start_camera(camera_config) for camera_config in self.camera_configs
         ]
 
-        self.sinks = [self.cs.getVideo(camera=camera) for camera in self.cameras]
-        self.source = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
+        # In this, source and sink are inverted from the cscore documentation.
+        # self.sink is a CvSource and self.sources are CvSinks. This is because it makes more sense for a reader.
+        # We get images from a source, and put images to a sink.
+        self.sources = [self.cs.getVideo(camera=camera) for camera in self.cameras]
+        self.sink = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
         # Width and Height are reversed here because the order of putVideo's width and height
         # parameters are the opposite of numpy's (technically it is an array, not an actual image).
         self.frame = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
@@ -51,7 +54,7 @@ class CameraManager:
             config: A dictionary with keys "name", "path", and "config"
                 as found by the read_config_json() function
         Returns:
-            A cv2 VideoSource
+            A cv2 Videosink
         """
         camera = self.cs.startAutomaticCapture(name=config["name"], path=config["path"])
         camera.setConfigJson(json.dumps(config["config"]))
@@ -66,7 +69,9 @@ class CameraManager:
             Frame_time, or 0 on error.
             A numpy array of the frame, dtype=np.uint8, BGR.
         """
-        frame_time, self.frame = self.sinks[camera].grabFrameNoTimeout(image=self.frame)
+        frame_time, self.frame = self.sources[camera].grabFrameNoTimeout(
+            image=self.frame
+        )
         return frame_time, self.frame
 
     def send_frame(self, frame: np.ndarray) -> None:
@@ -75,7 +80,7 @@ class CameraManager:
         Args:
             frame: A numpy array image. (Should always be the same size)
         """
-        self.source.putFrame(frame)
+        self.sink.putFrame(frame)
 
     def get_error(self, camera: int = 0) -> str:
         """Gets an error from the camera.
@@ -86,16 +91,16 @@ class CameraManager:
         Returns:
             A string containing the camera's error.
         """
-        return self.sinks[camera].getError()
+        return self.sources[camera].getError()
 
     def notify_error(self, error: str) -> None:
-        """Sends an error to the console and the source.
+        """Sends an error to the console and the sink.
         Args:
             error: The string to send. Should be gotten by get_error().
 
         """
         print(error, file=sys.stderr)
-        self.source.notifyError(error)
+        self.sink.notifyError(error)
 
 
 class MockImageManager:
