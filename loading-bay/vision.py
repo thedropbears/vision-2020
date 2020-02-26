@@ -43,7 +43,7 @@ class Vision:
         self.mask = cv2.inRange(
             self.hsv, HSV_LOWER_BOUND, HSV_UPPER_BOUND, dst=self.mask
         )
-        self.image = frame.copy()
+        self.image = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGR, dst=self.image)
 
         _, cnts, hierarchy = cv2.findContours(
             self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
