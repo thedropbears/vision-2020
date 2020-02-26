@@ -209,7 +209,7 @@ class Vision:
         )
 
         power_port = self.find_power_port(self.mask)
-        self.image = self.mask
+        self.image = self.mask # Display annotate
 
         if power_port is not None:
             self.prev_dist = self.avg_dist
