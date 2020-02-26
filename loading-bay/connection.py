@@ -38,3 +38,10 @@ class NTConnection:
             self.raspi_pong.setNumber(self._get_time())
             self.last_ping_time = self.ping_time
 
+
+class DummyConnection:
+    def send_results(self, results: Results) -> None:
+        print(results)
+
+    def pong(self) -> None:
+        ...
