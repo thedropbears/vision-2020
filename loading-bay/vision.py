@@ -1,4 +1,5 @@
 from camera_manager import CameraManager
+from connection import NTConnection
 from magic_numbers import *
 from utilities.functions import (
     get_corners_from_contour,
@@ -12,8 +13,9 @@ import math
 
 
 class Vision:
-    def __init__(self, camera_manager: CameraManager) -> None:
+    def __init__(self, camera_manager: CameraManager, connection: NTConnection) -> None:
         self.camera_manager = camera_manager
+        self.connection = connection
 
         self.image = np.zeros((FRAME_HEIGHT, FRAME_WIDTH, 3), np.uint8)
         self.mask = np.zeros((FRAME_HEIGHT, FRAME_WIDTH), np.uint8)
@@ -21,6 +23,7 @@ class Vision:
 
     def run(self) -> None:
         """Run the main vision loop once."""
+        self.connection.pong()
         frame_time, self.frame = self.camera_manager.get_frame()
         if not frame_time:
             error = self.camera_manager.get_error()
@@ -31,6 +34,7 @@ class Vision:
 
         if results is not None:
             distance, angle = results
+            self.connection.send_results((distance, angle, time.monotonic()))
 
         self.camera_manager.send_frame(self.image)
 
@@ -153,6 +157,7 @@ class Vision:
         return True, inner, outer
 
     def draw_contour_pair(self, inner: dict, outer: dict) -> None:
+        """Draw the inner and outer contours on self.image"""
         self.image = cv2.drawContours(
             self.image, inner["rect"].reshape((1, 4, 2)), -1, (255, 0, 0), thickness=2
         )
@@ -162,7 +167,7 @@ class Vision:
 
 
 if __name__ == "__main__":
-    vision = Vision(CameraManager())
+    vision = Vision(CameraManager(), NTConnection())
     while True:
         vision.run()
 
