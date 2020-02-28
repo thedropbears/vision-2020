@@ -58,67 +58,6 @@ class Vision:
         self.prev_horiz_angle = 0
         self.old_fps_time = 0
 
-    def find_loading_bay(self, frame: np.ndarray):
-        cnts, hierarchy = cv2.findContours(
-            self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
-        )
-        cnts = np.array(cnts)
-        hierarchy = np.array(hierarchy)[0]
-        outer_rects = {}
-        inner_rects = {}
-
-        for i, cnt in enumerate(cnts):
-            if hierarchy[i][3] == -1:
-                outer_rects[i] = (
-                    get_corners_from_contour(cnt),
-                    hierarchy[i],
-                    cv2.contourArea(cnt),
-                )
-            else:
-                inner_rects[i] = (
-                    get_corners_from_contour(cnt),
-                    hierarchy[i],
-                    cv2.contourArea(cnt),
-                )
-        if not (inner_rects and outer_rects):
-            return None
-
-        good = []
-
-        for i in outer_rects:
-            if outer_rects[i][2] > MIN_CONTOUR_AREA:
-                current_inners = []
-                next_child = outer_rects[i][1][2]
-                while next_child != -1:
-                    current_inners.append(inner_rects[next_child])
-                    next_child = inner_rects[next_child][1][0]
-                largest = max(current_inners, key=lambda x: x[2])
-                if (
-                    abs((outer_rects[i][2] / largest[2]) - LOADING_INNER_OUTER_RATIO)
-                    < 0.5
-                    and abs(
-                        (cv2.contourArea(outer_rects[i][0]) / outer_rects[i][2]) - 1
-                    )
-                    < LOADING_RECT_AREA_RATIO
-                    and abs((cv2.contourArea(largest[0]) / largest[2]) - 1)
-                    < LOADING_RECT_AREA_RATIO
-                ):
-                    good.append((outer_rects[i], largest))
-
-        self.image = frame.copy()
-        for pair in good:
-            self.image = cv2.drawContours(
-                self.image, pair[0][0].reshape((1, 4, 2)), -1, (255, 0, 0), thickness=2
-            )
-            self.image = cv2.drawContours(
-                self.image,
-                pair[1][0].reshape((1, 4, 2)),
-                -1,
-                (255, 0, 255),
-                thickness=1,
-            )
-        return (0.0, 0.0)
-
     def find_power_port(self, frame: np.ndarray) -> tuple:
         # cv2.imshow('Mask', frame)
 
@@ -244,18 +183,10 @@ class Vision:
             vert_angle = vert_angles[1]
             print("angle: ", math.degrees(vert_angle), " distance: ", distance)
 
-            self.avg_dist = (
-                distance * (1 - DIST_SMOOTHING_AMOUNT)
-                + self.prev_dist * DIST_SMOOTHING_AMOUNT
-            )
-            self.avg_horiz_angle = (
-                horiz_angle * (1 - ANGLE_SMOOTHING_AMOUNT)
-                + self.prev_horiz_angle * ANGLE_SMOOTHING_AMOUNT
-            )
             if self.testing:
                 return (distance, horiz_angle)
             else:
-                return (self.avg_dist, self.avg_horiz_angle)
+                return (distance, horiz_angle)
         else:
             return None
 
