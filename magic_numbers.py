@@ -22,7 +22,7 @@ FRAME_HEIGHT = 240
 CAMERA_HEIGHT = 0.913  # in metres, off the ground
 TARGET_HEIGHT_BOTTOM = 2.064  # in metres, off the ground
 TARGET_HEIGHT_TOP = 2.500  # in metres, off the ground (nominally 2.496 per specs)
-TILT_CORRECTION = 2.289 # Degrees, measured delta at 10 metres. Provisional.
+TILT_CORRECTION = 2.289  # Degrees, measured delta at 10 metres. Provisional.
 GROUND_ANGLE = math.radians(16.5 + TILT_CORRECTION)  # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
@@ -88,7 +88,9 @@ C920_2_DIST_COEFFS = np.array(
     [[0.13840045, -0.3277049, -0.00142985, -0.00095689, 0.28607425]], dtype=np.float32
 )
 
-ANGLE_SMOOTHING_AMOUNT = 0.3  # How much of the returned angle should be the last returned one
+ANGLE_SMOOTHING_AMOUNT = (
+    0.3  # How much of the returned angle should be the last returned one
+)
 DIST_SMOOTHING_AMOUNT = 0.8
 
 # Recognition parameters. These should be variables that come from calibration.

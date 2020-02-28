@@ -39,7 +39,7 @@ class Vision:
 
         # Camera Configuration
         self.camera_manager = camera_manager
-            
+
         self.camera_manager.set_camera_property(0, "white_balance_temperature_auto", 0)
         self.camera_manager.set_camera_property(0, "exposure_auto", 1)
         self.camera_manager.set_camera_property(0, "focus_auto", 0)
@@ -141,17 +141,19 @@ class Vision:
             midX = self.get_mid(power_port)
 
             target_top = min(list(power_port[:, :, 1]))
-            #target_bottom = max(list(power_port[:, :, 1]))
+            # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
-            horiz_angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2, True)
+            horiz_angle = get_horizontal_angle(
+                midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2, True
+            )
 
             vert_angle = get_vertical_angle_linear(
-                    target_top, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
-                )
+                target_top, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
+            )
 
             distance = get_distance(
-                    vert_angle, TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
-                )
+                vert_angle, TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
+            )
             print("angle: ", math.degrees(vert_angle), " distance: ", distance)
 
             return (distance, horiz_angle)

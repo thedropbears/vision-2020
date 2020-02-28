@@ -25,7 +25,7 @@ class NTConnection:
         self.fps_entry = nt.getEntry("fps")
 
         self.old_fps_time = 0.0
-        
+
         self.last_ping_time = 0.0
         self.time_to_pong = 0.00000001
         self._get_time = time.monotonic
@@ -43,10 +43,9 @@ class NTConnection:
 
     def set_fps(self) -> None:
         current_time = time.monotonic()
-        fps = 1/(current_time-self.old_fps_time)
+        fps = 1 / (current_time - self.old_fps_time)
         self.old_fps_time = current_time
         self.fps_entry.setDouble(fps)
-
 
 
 class DummyConnection:

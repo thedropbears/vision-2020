@@ -197,7 +197,8 @@ def get_values_solvepnp(
     distance = math.hypot(tvec[0], tvec[2])
     angle = math.atan2(tvec[0], tvec[2])
     return distance, angle
-    
+
+
 def order_rectangle(cnt: np.array, inverted: bool = False) -> np.array:
     """Orders a rectangle into clockwise/anticlockwise around their average point.
 

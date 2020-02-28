@@ -225,4 +225,3 @@ class WebcamCameraManager:
 
         """
         print(error, file=sys.stderr)
-

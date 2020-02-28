@@ -169,4 +169,3 @@ if __name__ == "__main__":
     vision = Vision(CameraManager(), NTConnection())
     while True:
         vision.run()
-
