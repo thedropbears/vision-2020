@@ -9,7 +9,7 @@ It can be found at https://github.com/thedropbears/vision-2020
 import sys
 import cv2
 import numpy as np
-from connection import Connection
+from connection import NTConnection
 from camera_manager import CameraManager
 from magic_numbers import *
 from utilities.functions import *
@@ -28,9 +28,7 @@ class Vision:
 
     entries = None
 
-    def __init__(
-        self, test_img=[], test_video=[], test_display=False, using_nt=False,
-    ):
+    def __init__(self, camera_manager: CameraManager, connection: NTConnection) -> None:
         # self.entries = entries
         # Memory Allocation
         # Numpy takes Rows then Cols as dimensions. Height x Width
@@ -40,32 +38,18 @@ class Vision:
         self.mask = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH), dtype=np.uint8)
 
         # Camera Configuration
-        self.CameraManager = CameraManager(
-            test_img=test_img, test_video=test_video, test_display=test_display
-        )
-        self.testing = len(test_video) or len(test_img)
-        if not self.testing:
-            self.CameraManager.setCameraProperty(0, "white_balance_temperature_auto", 0)
-            self.CameraManager.setCameraProperty(0, "exposure_auto", 1)
-            self.CameraManager.setCameraProperty(0, "focus_auto", 0)
-            self.CameraManager.setCameraProperty(0, "exposure_absolute", 1)
+        self.camera_manager = camera_manager
+            
+        self.camera_manager.set_camera_property(0, "white_balance_temperature_auto", 0)
+        self.camera_manager.set_camera_property(0, "exposure_auto", 1)
+        self.camera_manager.set_camera_property(0, "focus_auto", 0)
+        self.camera_manager.set_camera_property(0, "exposure_absolute", 1)
 
-        self.Connection = Connection(using_nt=using_nt, test=self.testing)
+        self.connection = connection
 
-        self.avg_horiz_angle = 0
-        self.avg_dist = 0
-        self.prev_dist = 0
-        self.prev_horiz_angle = 0
         self.old_fps_time = 0
 
     def find_power_port(self, frame: np.ndarray) -> tuple:
-        # cv2.imshow('Mask', frame)
-
-        # frame = cv2.dilate(frame, None, dst=frame, iterations=1)
-        # frame = cv2.erode(frame, None, dst=frame, iterations=1)
-        # frame = cv2.erode(frame, None, dst=frame, iterations=1)
-
-        # cv2.imshow('After Ero/Dil', frame)
 
         hullList = []
         # Convert to RGB to draw contour on - shouldn't recreate every time
@@ -153,40 +137,24 @@ class Vision:
         self.image = self.mask
 
         if power_port is not None:
-            self.prev_dist = self.avg_dist
-            self.prev_horiz_angle = self.avg_horiz_angle
             self.create_annotated_display(frame, power_port)
             midX = self.get_mid(power_port)
 
             target_top = min(list(power_port[:, :, 1]))
-            target_bottom = max(list(power_port[:, :, 1]))
+            #target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
             horiz_angle = get_horizontal_angle(midX, FRAME_WIDTH, MAX_FOV_WIDTH / 2, True)
-            vert_angles = [
-                get_vertical_angle_linear(
-                    target_bottom, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
-                ),
-                get_vertical_angle_linear(
-                    target_top, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
-                ),
-            ]
-            distances = [
-                get_distance(
-                    vert_angles[0], TARGET_HEIGHT_BOTTOM, CAMERA_HEIGHT, GROUND_ANGLE
-                ),
-                get_distance(
-                    vert_angles[1], TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
-                ),
-            ]
 
-            distance = distances[1]
-            vert_angle = vert_angles[1]
+            vert_angle = get_vertical_angle_linear(
+                    target_top, FRAME_HEIGHT, MAX_FOV_HEIGHT / 2, True
+                )
+
+            distance = get_distance(
+                    vert_angle, TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
+                )
             print("angle: ", math.degrees(vert_angle), " distance: ", distance)
 
-            if self.testing:
-                return (distance, horiz_angle)
-            else:
-                return (distance, horiz_angle)
+            return (distance, horiz_angle)
         else:
             return None
 
@@ -195,50 +163,28 @@ class Vision:
         """Main process function.
         When ran, takes image, processes image, and sends results to RIO.
         """
-        if not self.testing:
-            if self.Connection.using_nt:
-                self.Connection.pong()
-        frame_time, self.frame = self.CameraManager.get_frame(0)
+        self.connection.pong()
+
+        frame_time, self.frame = self.camera_manager.get_frame(0)
         if frame_time == 0:
-            print(self.CameraManager.sinks[0].getError(), file=sys.stderr)
-            self.CameraManager.source.notifyError(
-                self.CameraManager.sinks[0].getError()
-            )
-        else:
-            # Flip the image cause originally upside down.
-            self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
-            results = self.get_image_values(self.frame)
+            error = self.camera_manager.get_error()
+            self.camera_manager.source.notifyError(error)
+            return
+        # Flip the image cause originally upside down.
+        self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
+        results = self.get_image_values(self.frame)
 
-            if self.Connection.using_nt:
-                self.time = time.monotonic()
-                self.fps = 1/(self.time-self.old_fps_time)
-                self.old_fps_time = self.time
-                self.Connection.fps_entry.setDouble(self.fps)
+        self.connection.set_fps()
 
-            if results is not None:
-                distance, angle = results
-                self.Connection.send_results(
-                    (distance, angle, time.monotonic())
-                )  # distance (meters), angle (radians), timestamp
-            self.CameraManager.send_frame(self.image)
+        if results is not None:
+            distance, angle = results
+            self.connection.send_results(
+                (distance, angle, time.monotonic())
+            )  # distance (meters), angle (radians), timestamp
+        self.camera_manager.send_frame(self.image)
 
 
 if __name__ == "__main__":
-    sampleImgs = False
-    # These imports are here so that one does not have to install cscore
-    # (a somewhat difficult project on Windows) to run tests.
-    if sampleImgs:
-        import os
-
-        testImgs = os.listdir("tests/power_port/")
-
-        for im in testImgs:
-            # print(im.split("m")[0] + "\t", end="")
-            camera_server = Vision(
-                test_img=cv2.imread("tests/power_port/" + im), test_display=True
-            )
-            camera_server.run()
-    else:
-        camera_server = Vision(using_nt=True)
-        while True:
-            camera_server.run()
+    vision = Vision(CameraManager(), NTConnection())
+    while True:
+        vision.run()
