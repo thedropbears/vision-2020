@@ -50,7 +50,7 @@ PORT_POINTS = np.array(  # Converted to mm
 ).reshape((4, 1, 3))
 
 MIN_CONTOUR_AREA = 50
-LOADING_INNER_OUTER_RATIO = 3.62
+LOADING_INNER_OUTER_RATIO = 11 / 3
 LOADING_RECT_AREA_RATIO = 0.2
 
 # Camera parameters (fixed per-camera at a given zoom) These are for the
@@ -90,3 +90,35 @@ C920_2_DIST_COEFFS = np.array(
 
 ANGLE_SMOOTHING_AMOUNT = 0.3  # How much of the returned angle should be the last returned one
 DIST_SMOOTHING_AMOUNT = 0.8
+
+# Recognition parameters. These should be variables that come from calibration.
+LOADING_BAY_HSV_LOWER_BOUND = (60, 50, 50)
+LOADING_BAY_HSV_UPPER_BOUND = (90, 255, 255)
+
+# (0)_______(3)
+#  | (4)_(7) |
+#  |  |   |  |
+#  |  |   |  |
+#  | (5)_(6) |
+# (1)_______(2)
+
+LOADING_BAY_POINTS = (
+    np.array(
+        [
+            [3.5, 5.5, 0.0],
+            [3.5, -5.5, 0.0],
+            [-3.5, -5.5, 0.0],
+            [-3.5, 5.5, 0.0],
+            [1.5, 3.5, 0.0],
+            [1.5, -3.5, 0.0],
+            [-1.5, -3.5, 0.0],
+            [-1.5, 3.5, 0.0],
+        ],
+        dtype=np.float32,
+    )
+    * 0.0254
+)
+
+INNER_OUTER_ERROR = 0.5
+
+RAW_RECT_AREA_ERROR = 0.3
