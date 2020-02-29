@@ -94,6 +94,8 @@ class Vision:
                 else:
                     power_port_contour = acceptable_cnts[0]
                 power_port_points = get_corners_from_contour(power_port_contour)
+                if len(power_port_points) != 4:
+                    return None
                 # x, y, w, h = cv2.boundingRect(power_port_contour)
                 for i in range(4):
                     cv2.circle(
