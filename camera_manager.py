@@ -102,7 +102,7 @@ class CameraManager:
         print(error, file=sys.stderr)
         self.sink.notifyError(error)
 
-    def set_camera_property(self, camera, property, value):
+    def set_camera_property(self, camera, property, value) -> None:
         self.cameras[camera].getProperty(property).set(value)
 
 
@@ -149,6 +149,9 @@ class MockImageManager:
         """
         print(error, file=sys.stderr)
 
+    def set_camera_property(self, camera, property, value) -> None:
+        ...
+
 
 class MockVideoManager:
     def __init__(self, video: cv2.VideoCapture):
@@ -189,6 +192,8 @@ class MockVideoManager:
         """
         print(error, file=sys.stderr)
 
+    def set_camera_property(self, camera, property, value) -> None:
+        ...
 
 class WebcamCameraManager:
     def __init__(self, camera: int = 0) -> None:
@@ -225,3 +230,6 @@ class WebcamCameraManager:
 
         """
         print(error, file=sys.stderr)
+
+    def set_camera_property(self, camera, property, value) -> None:
+        ...
