@@ -5,6 +5,8 @@ import sys
 files = ["magic_numbers.py", "connection.py", "camera_manager.py", "utilities"]
 
 try:
+    # Find where in the arguments `deploy.py` is.
+    # This is so it can be run as `python deploy.py etc` or `deploy.py etc`
     for i, arg in enumerate(sys.argv[1:]):
         if arg[-9:] == "deploy.py":
             deploy_index = i
