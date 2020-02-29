@@ -5,9 +5,9 @@ import sys
 files = ["magic_numbers.py", "connection.py", "camera_manager.py", "utilities"]
 
 try:
-    deploy_index = [
-        True if arg[-9:] else False for i, arg in enumerate(sys.argv)
-    ].index(True)
+    for i, arg in enumerate(sys.argv[1:]):
+        if arg[-9:] == "deploy.py":
+            deploy_index = i
 
     if sys.argv[deploy_index + 1] == "loading-bay":
         main_file = "loading_bay_vision.py"
