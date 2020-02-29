@@ -1,6 +1,7 @@
 from paramiko import SSHClient, AutoAddPolicy
 from scp import SCPClient
 import argparse
+import time
 
 files = ["magic_numbers.py", "connection.py", "camera_manager.py", "utilities"]
 
@@ -51,6 +52,8 @@ print("Done")
 print("Making file system writable ... ", end="")
 ssh.exec_command("rw")
 print("Done")
+
+time.sleep(0.5)
 
 print("Uploading files ... ", end="")
 scp = SCPClient(ssh.get_transport())
