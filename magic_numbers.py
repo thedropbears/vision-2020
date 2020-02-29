@@ -22,7 +22,7 @@ FRAME_HEIGHT = 240
 CAMERA_HEIGHT = 0.913  # in metres, off the ground
 TARGET_HEIGHT_BOTTOM = 2.064  # in metres, off the ground
 TARGET_HEIGHT_TOP = 2.500  # in metres, off the ground (nominally 2.496 per specs)
-TILT_CORRECTION = 2.289 # Degrees, measured delta at 10 metres. Provisional.
+TILT_CORRECTION = 2.289  # Degrees, measured delta at 10 metres. Provisional.
 GROUND_ANGLE = math.radians(16.5 + TILT_CORRECTION)  # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
@@ -50,7 +50,7 @@ PORT_POINTS = np.array(  # Converted to mm
 ).reshape((4, 1, 3))
 
 MIN_CONTOUR_AREA = 50
-LOADING_INNER_OUTER_RATIO = 3.62
+LOADING_INNER_OUTER_RATIO = 11 / 3
 LOADING_RECT_AREA_RATIO = 0.2
 
 # Camera parameters (fixed per-camera at a given zoom) These are for the
@@ -88,5 +88,39 @@ C920_2_DIST_COEFFS = np.array(
     [[0.13840045, -0.3277049, -0.00142985, -0.00095689, 0.28607425]], dtype=np.float32
 )
 
-ANGLE_SMOOTHING_AMOUNT = 0.3  # How much of the returned angle should be the last returned one
+# How much of the returned angle should be the last returned one
+ANGLE_SMOOTHING_AMOUNT = 0.3
+
 DIST_SMOOTHING_AMOUNT = 0.8
+
+# Recognition parameters. These should be variables that come from calibration.
+LOADING_BAY_HSV_LOWER_BOUND = (60, 50, 50)
+LOADING_BAY_HSV_UPPER_BOUND = (90, 255, 255)
+
+# (0)_______(3)
+#  | (4)_(7) |
+#  |  |   |  |
+#  |  |   |  |
+#  | (5)_(6) |
+# (1)_______(2)
+
+LOADING_BAY_POINTS = (
+    np.array(
+        [
+            [3.5, 5.5, 0.0],
+            [3.5, -5.5, 0.0],
+            [-3.5, -5.5, 0.0],
+            [-3.5, 5.5, 0.0],
+            [1.5, 3.5, 0.0],
+            [1.5, -3.5, 0.0],
+            [-1.5, -3.5, 0.0],
+            [-1.5, 3.5, 0.0],
+        ],
+        dtype=np.float32,
+    )
+    * 0.0254
+)
+
+INNER_OUTER_ERROR = 0.5
+
+RAW_RECT_AREA_ERROR = 0.3
