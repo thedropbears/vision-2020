@@ -50,7 +50,7 @@ ssh.exec_command("sudo svc -d /service/camera")
 print("Done")
 
 print("Making file system writable ... ", end="")
-ssh.exec_command("rw")
+ssh.exec_command("sudo mount -o remount,rw / ; sudo mount -o remount,rw /boot")
 print("Done")
 
 time.sleep(0.5)
@@ -62,7 +62,7 @@ scp.put(main_file, remote_path="~/uploaded.py")
 print("Done")
 
 print("Making file system read-only ... ", end="")
-ssh.exec_command("ro")
+ssh.exec_command("sudo mount -o remount,ro / ; sudo mount -o remount,ro /boot")
 print("Done")
 
 print("Turning on vision ... ", end="")
