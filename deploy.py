@@ -26,7 +26,7 @@ except:
     quit()
 
 
-server_ip = "frcvision.local"
+server_ip = "10.47.74.11"
 username = "pi"
 password = "raspberry"
 
