@@ -95,34 +95,25 @@ class Vision:
             The contour's area and approximation if it passes the tests, otherwise None
 
         Tests:
-            If there are 4 or more points
             If the contour area is above a certain amount
             If the ratio of the contour area to convex hull area is within a certain range
             If the contour's approximation has 4 sides
-            If the ratio of the contour's approximation's area to the hull area is within a certain range
         """
-        if not (len(contour) >= 4):
-            return None
-
         contour_area = cv2.contourArea(contour)
         if not (contour_area > PP_MIN_CONTOUR_AREA):
+            print(
+                f"Failed Minimum Contour Area Check, {contour_area > PP_MIN_CONTOUR_AREA}"
+            )
             return None
 
         convex_hull = cv2.convexHull(contour)
         convex_area = cv2.contourArea(convex_hull)
         if not (PP_MAX_AREA_RATIO > contour_area / convex_area > PP_MIN_AREA_RATIO):
+            print(f"Failed Contour-Convex Area Check, {contour_area / convex_area}")
             return None
 
         approximation = get_corners_from_contour(contour)
         if not (len(approximation) == 4):
-            return None
-
-        approximation_area = cv2.contourArea(approximation)
-        if not (
-            PP_MAX_APPROX_AREA_RATIO
-            > approximation_area / convex_area
-            > PP_MIN_APPROX_AREA_RATIO
-        ):
             return None
 
         return contour_area, approximation
