@@ -42,10 +42,10 @@ class Vision:
         # Camera Configuration
         self.camera_manager = camera_manager
 
-        self.camera_manager.set_camera_property(0, "white_balance_temperature_auto", 0)
-        self.camera_manager.set_camera_property(0, "exposure_auto", 1)
-        self.camera_manager.set_camera_property(0, "focus_auto", 0)
-        self.camera_manager.set_camera_property(0, "exposure_absolute", 1)
+        self.camera_manager.set_camera_property("white_balance_temperature_auto", 0)
+        self.camera_manager.set_camera_property("exposure_auto", 1)
+        self.camera_manager.set_camera_property("focus_auto", 0)
+        self.camera_manager.set_camera_property("exposure_absolute", 1)
 
         self.connection = connection
 
@@ -157,7 +157,7 @@ class Vision:
         """
         self.connection.pong()
 
-        frame_time, self.frame = self.camera_manager.get_frame(0)
+        frame_time, self.frame = self.camera_manager.get_frame()
         if frame_time == 0:
             error = self.camera_manager.get_error()
             self.camera_manager.source.notifyError(error)
@@ -178,21 +178,7 @@ class Vision:
 
 if __name__ == "__main__":
     vision = Vision(
-        CameraManager(
-            [
-                {
-                    "name": "Power Port Camera",
-                    "path": "/dev/video0",
-                    "config": {
-                        "pixel format": "yuyv",
-                        "fps": 30,
-                        "height": 240,
-                        "width": 320,
-                        "stream": {"properties": []},
-                    },
-                }
-            ]
-        ),
+        CameraManager("Power Port Camera", "/dev/video0", 240, 320, 30, "yuyv"),
         NTConnection(),
     )
     while True:

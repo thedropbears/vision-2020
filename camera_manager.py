@@ -7,54 +7,58 @@ import sys
 
 
 class CameraManager:
-    def __init__(self, camera_configs: List[Dict]) -> None:
+    def __init__(
+        self,
+        name: str,
+        path: str,
+        height: int,
+        width: int,
+        fps: int,
+        pixel_format: str,
+    ) -> None:
         """Initialises a Camera Manager
         
         Args:
-            camera_configs: A list of dictionaries with the cameras' info. For an example, see power_port_vision.py
+            name: The name of the camera
+            path: The path of the camera (can be id, path, or /dev/video)
+            height: The frame height
+            width: The frame width
+            fps: The video fps
+            pixel_format: The video's pixel format
         """
         from cscore import CameraServer
 
         self.cs = CameraServer.getInstance()
-        self.camera_configs = camera_configs
 
-        self.cameras = [
-            self.start_camera(camera_config) for camera_config in self.camera_configs
-        ]
-
+        self.camera = self.cs.startAutomaticCapture(name=name, path=path)
+        self.camera.setConfigJson(
+            json.dumps(
+                {
+                    "pixel_format": pixel_format,
+                    "fps": fps,
+                    "height": height,
+                    "width": width,
+                }
+            )
+        )
+        
         # In this, source and sink are inverted from the cscore documentation.
         # self.sink is a CvSource and self.sources are CvSinks. This is because it makes more sense for a reader.
         # We get images from a source, and put images to a sink.
-        self.sources = [self.cs.getVideo(camera=camera) for camera in self.cameras]
+        self.source = self.cs.getVideo(camera=self.camera)
         self.sink = self.cs.putVideo("Driver_Stream", FRAME_WIDTH, FRAME_HEIGHT)
         # Width and Height are reversed here because the order of putVideo's width and height
         # parameters are the opposite of numpy's (technically it is an array, not an actual image).
         self.frame = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
 
-    def start_camera(self, config: Dict):
-        """Initialises a camera.
+    def get_frame(self) -> Tuple[float, np.ndarray]:
+        """Gets a frame from the camera.
 
-        Args:
-            config: A dictionary with keys "name", "path", and "config"
-        Returns:
-            A cv2 Videosink
-        """
-        camera = self.cs.startAutomaticCapture(name=config["name"], path=config["path"])
-        camera.setConfigJson(json.dumps(config["config"]))
-        return camera
-
-    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
-        """Gets a frame from the specified camera.
-
-        Args:
-            camera: Which camera to get the frame from. Default is 0.
         Returns:
             Frame_time, or 0 on error.
             A numpy array of the frame, dtype=np.uint8, BGR.
         """
-        frame_time, self.frame = self.sources[camera].grabFrameNoTimeout(
-            image=self.frame
-        )
+        frame_time, self.frame = self.source.grabFrameNoTimeout(image=self.frame)
         return frame_time, self.frame
 
     def send_frame(self, frame: np.ndarray) -> None:
@@ -65,12 +69,10 @@ class CameraManager:
         """
         self.sink.putFrame(frame)
 
-    def get_error(self, camera: int = 0) -> str:
+    def get_error(self) -> str:
         """Gets an error from the camera.
         Should be run by Vision when frame_time is 0.
 
-        Args:
-            camera: Which camera to get the error from.
         Returns:
             A string containing the camera's error.
         """
@@ -85,8 +87,8 @@ class CameraManager:
         print(error, file=sys.stderr)
         self.sink.notifyError(error)
 
-    def set_camera_property(self, camera, property, value) -> None:
-        self.cameras[camera].getProperty(property).set(value)
+    def set_camera_property(self, property, value) -> None:
+        self.camera.getProperty(property).set(value)
 
 
 class MockImageManager:
@@ -106,11 +108,9 @@ class MockImageManager:
         """
         self.image = new_image
 
-    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
+    def get_frame(self) -> Tuple[float, np.ndarray]:
         """Returns self.image.
 
-        Args:
-            camera: Not needed, just here to ensure similarity with CameraManager.
         Returns:
             0.1: Simulates the frame_time
             self.image, a BGR numpy array.
@@ -121,7 +121,7 @@ class MockImageManager:
         cv2.imshow("Image", frame)
         cv2.waitKey(0)
 
-    def get_error(self, camera: int = 0) -> str:
+    def get_error(self) -> str:
         return "Error"
 
     def notify_error(self, error: str) -> None:
@@ -132,7 +132,7 @@ class MockImageManager:
         """
         print(error, file=sys.stderr)
 
-    def set_camera_property(self, camera, property, value) -> None:
+    def set_camera_property(self, property, value) -> None:
         ...
 
 
@@ -145,11 +145,9 @@ class MockVideoManager:
         """
         self.video = video
 
-    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
+    def get_frame(self) -> Tuple[float, np.ndarray]:
         """Returns the next frame of self.video.
 
-        Args:
-            camera: Not needed, just here to ensure similarity with CameraManager.
         Returns:
             Whether or not it was successful. False means error.
             The next frame of self.video.
@@ -164,7 +162,7 @@ class MockVideoManager:
     def send_frame(self, frame: np.ndarray) -> None:
         ...
 
-    def get_error(self, camera: int = 0) -> str:
+    def get_error(self) -> str:
         return "Error"
 
     def notify_error(self, error: str) -> None:
@@ -175,7 +173,7 @@ class MockVideoManager:
         """
         print(error, file=sys.stderr)
 
-    def set_camera_property(self, camera, property, value) -> None:
+    def set_camera_property(self, property, value) -> None:
         ...
 
 
@@ -189,11 +187,9 @@ class WebcamCameraManager:
         """
         self.video = cv2.VideoCapture(camera)
 
-    def get_frame(self, camera: int = 0) -> Tuple[float, np.ndarray]:
+    def get_frame(self) -> Tuple[float, np.ndarray]:
         """Returns the current video frame.
 
-        Args:
-            camera: Not needed, just here to ensure similarity with CameraManager.
         Returns:
             Whether or not it was successful. False means error.
             The current video frame.
@@ -204,7 +200,7 @@ class WebcamCameraManager:
         cv2.imshow("image", frame)
         cv2.waitKey(1)
 
-    def get_error(self, camera: int = 0) -> str:
+    def get_error(self) -> str:
         return "Error"
 
     def notify_error(self, error: str) -> None:
@@ -215,5 +211,5 @@ class WebcamCameraManager:
         """
         print(error, file=sys.stderr)
 
-    def set_camera_property(self, camera, property, value) -> None:
+    def set_camera_property(self, property, value) -> None:
         ...
