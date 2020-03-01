@@ -24,24 +24,17 @@ class CameraManager:
             height: The frame height
             width: The frame width
             fps: The video fps
-            pixel_format: The video's pixel format
+            pixel_format: The video's pixel format (kYUYV, kMJPEG, etc)
         """
-        from cscore import CameraServer
+        from cscore import CameraServer, VideoMode
 
         self.cs = CameraServer.getInstance()
 
         self.camera = self.cs.startAutomaticCapture(name=name, path=path)
-        self.camera.setConfigJson(
-            json.dumps(
-                {
-                    "pixel_format": pixel_format,
-                    "fps": fps,
-                    "height": height,
-                    "width": width,
-                }
-            )
+        self.camera.setVideoMode(
+            getattr(VideoMode.PixelFormat, pixel_format), width, height, fps
         )
-        
+
         # In this, source and sink are inverted from the cscore documentation.
         # self.sink is a CvSource and self.sources are CvSinks. This is because it makes more sense for a reader.
         # We get images from a source, and put images to a sink.

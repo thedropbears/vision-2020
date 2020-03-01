@@ -178,7 +178,7 @@ class Vision:
 
 if __name__ == "__main__":
     vision = Vision(
-        CameraManager("Power Port Camera", "/dev/video0", 240, 320, 30, "yuyv"),
+        CameraManager("Power Port Camera", "/dev/video0", 240, 320, 30, "kYUYV"),
         NTConnection(),
     )
     while True:
