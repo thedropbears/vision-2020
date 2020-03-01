@@ -15,6 +15,7 @@ from magic_numbers import *
 from utilities.functions import *
 import math
 import time
+from typing import Optional, Tuple
 
 
 class Vision:
@@ -52,8 +53,6 @@ class Vision:
         self.old_fps_time = 0
 
     def find_power_port(self, frame: np.ndarray) -> tuple:
-
-        hullList = []
         # Convert to RGB to draw contour on - shouldn't recreate every time
         self.display = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR, dst=self.display)
 
@@ -61,37 +60,18 @@ class Vision:
         if len(cnts) >= 1:
             acceptable_cnts = []
             # Check if the found contour is possibly a target
-            for current_contour in enumerate(cnts):
-                area = cv2.contourArea(current_contour[1])
-                if PP_MAX_CONTOUR_AREA > area > PP_MIN_CONTOUR_AREA:
-                    box = cv2.boundingRect(current_contour[1])
-                    # Convex hull gives the bounding polygon of the contour with no
-                    # interior angles greater than 180deg
-                    hull = cv2.convexHull(current_contour[1])
-                    hull_area = cv2.contourArea(hull)
-                    # If the contour takes up more than X% of the Hull and
-                    # width greater than height
-                    if (
-                        PP_MAX_AREA_RATIO > area / hull_area > PP_MIN_AREA_RATIO
-                        and box[2] > box[3]
-                    ):
-                        # print(box) # X,Y,W,H
-                        # print("P %.2f, Area %d, Hull, %d" % (area / hull_area, area, hull_area))
-                        acceptable_cnts.append(current_contour[1])
-                        hullList.append(hull)
+            for current_contour in cnts:
+                result = self.test_contour(current_contour)
+                if result is not None:
+                    acceptable_cnts.append(result)
 
             if acceptable_cnts:
                 if len(acceptable_cnts) > 1:
                     # Pick the largest found 'power port'
-                    power_port_contour = max(
-                        acceptable_cnts, key=lambda x: cv2.contourArea(x)
-                    )
+                    power_port_contour = max(acceptable_cnts, key=lambda x: x[0])
                 else:
                     power_port_contour = acceptable_cnts[0]
-                power_port_points = get_corners_from_contour(power_port_contour)
-                if len(power_port_points) != 4:
-                    return None
-                return power_port_points
+                return power_port_contour
             else:
                 return None
         else:
@@ -105,6 +85,47 @@ class Vision:
             cv2.circle(frame, tuple(point[0]), 5, self.COLOUR_BLUE, thickness=2)
 
         return frame
+
+    def test_contour(self, contour: np.ndarray) -> Optional[Tuple[np.ndarray, int]]:
+        """Test if a contour is valid.
+
+        Args:
+            contour: A single opencv contour
+        Returns:
+            The contour's area and approximation if it passes the tests, otherwise None
+
+        Tests:
+            If there are 4 or more points
+            If the contour area is above a certain amount
+            If the ratio of the contour area to convex hull area is within a certain range
+            If the contour's approximation has 4 sides
+            If the ratio of the contour's approximation's area to the hull area is within a certain range
+        """
+        if not (len(contour) >= 4):
+            return None
+
+        contour_area = cv2.contourArea(contour)
+        if not (contour_area > PP_MIN_CONTOUR_AREA):
+            return None
+
+        convex_hull = cv2.convexHull(contour)
+        convex_area = cv2.contourArea(convex_hull)
+        if not (PP_MAX_AREA_RATIO > contour_area / convex_area > PP_MIN_AREA_RATIO):
+            return None
+
+        approximation = get_corners_from_contour(contour)
+        if not (len(approximation) == 4):
+            return None
+
+        approximation_area = cv2.contourArea(approximation)
+        if not (
+            PP_MAX_APPROX_AREA_RATIO
+            > approximation_area / convex_area
+            > PP_MIN_APPROX_AREA_RATIO
+        ):
+            return None
+
+        return contour_area, approximation
 
     def get_mid(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
@@ -127,10 +148,10 @@ class Vision:
         power_port = self.find_power_port(self.mask)
 
         if power_port is not None:
-            self.display = self.create_annotated_display(self.display, power_port)
-            midX = self.get_mid(power_port)
+            self.display = self.create_annotated_display(self.display, power_port[1])
+            midX = self.get_mid(power_port[1])
 
-            target_top = min(list(power_port[:, :, 1]))
+            target_top = min(list(power_port[1][:, :, 1]))
             # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
             horiz_angle = get_horizontal_angle(
