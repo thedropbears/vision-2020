@@ -27,13 +27,15 @@ class Vision:
     """
 
     entries = None
+    COLOUR_GREEN = (0, 255, 0)
+    COLOUR_BLUE = (255, 0, 0)
+    COLOUR_RED = (0, 0, 255)
 
     def __init__(self, camera_manager: CameraManager, connection: NTConnection) -> None:
         # self.entries = entries
         # Memory Allocation
         # Numpy takes Rows then Cols as dimensions. Height x Width
         self.hsv = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
-        self.image = self.hsv.copy()
         self.display = self.hsv.copy()
         self.mask = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH), dtype=np.uint8)
 
@@ -78,13 +80,6 @@ class Vision:
                         acceptable_cnts.append(current_contour[1])
                         hullList.append(hull)
 
-            # ***This section of code displays the possible targets***
-            for i in range(len(acceptable_cnts)):
-                color_G = (0, 255, 0)
-                color_B = (255, 0, 0)
-                cv2.drawContours(self.display, acceptable_cnts, i, color_G)
-                cv2.drawContours(self.display, hullList, i, color_B)
-
             if acceptable_cnts:
                 if len(acceptable_cnts) > 1:
                     # Pick the largest found 'power port'
@@ -96,26 +91,20 @@ class Vision:
                 power_port_points = get_corners_from_contour(power_port_contour)
                 if len(power_port_points) != 4:
                     return None
-                # x, y, w, h = cv2.boundingRect(power_port_contour)
-                for i in range(4):
-                    cv2.circle(
-                        self.display, tuple(power_port_points[i][0]), 3, (0, 0, 255)
-                    )
-                # cv2.imshow("Display", self.display)
-                # cv2.waitKey()
                 return power_port_points
             else:
                 return None
         else:
             return None
 
-    def create_annotated_display(
-        self, frame: np.ndarray, points: np.ndarray, printing=False
-    ):
-        for i in range(len(points)):
-            cv2.circle(frame, (points[i][0][0], points[i][0][1]), 5, (0, 255, 0))
-        if printing:
-            print(points)
+    def create_annotated_display(self, frame: np.ndarray, points: np.ndarray):
+        cv2.drawContours(
+            frame, points.reshape(1, 4, 2), -1, self.COLOUR_BLUE, thickness=2
+        )
+        for point in points:
+            cv2.circle(frame, tuple(point[0]), 5, self.COLOUR_BLUE, thickness=2)
+
+        return frame
 
     def get_mid(self, contour: np.ndarray) -> tuple:
         """ Use the cv2 moments to find the centre x of the contour.
@@ -136,10 +125,9 @@ class Vision:
         )
 
         power_port = self.find_power_port(self.mask)
-        self.image = self.mask
 
         if power_port is not None:
-            self.create_annotated_display(frame, power_port)
+            self.display = self.create_annotated_display(self.display, power_port)
             midX = self.get_mid(power_port)
 
             target_top = min(list(power_port[:, :, 1]))
@@ -185,7 +173,7 @@ class Vision:
             self.connection.send_results(
                 (distance, angle, time.monotonic())
             )  # distance (meters), angle (radians), timestamp
-        self.camera_manager.send_frame(self.image)
+        self.camera_manager.send_frame(self.display)
 
 
 if __name__ == "__main__":
