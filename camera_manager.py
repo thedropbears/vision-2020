@@ -7,14 +7,16 @@ import sys
 
 
 class CameraManager:
-    CONFIG_FILE_PATH = "/boot/frc.json"
-
-    def __init__(self) -> None:
-        """Initialises a Camera Manager"""
+    def __init__(self, camera_configs: List[Dict]) -> None:
+        """Initialises a Camera Manager
+        
+        Args:
+            camera_configs: A list of dictionaries with the cameras' info. For an example, see power_port_vision.py
+        """
         from cscore import CameraServer
 
         self.cs = CameraServer.getInstance()
-        self.camera_configs = self.read_config_JSON()
+        self.camera_configs = camera_configs
 
         self.cameras = [
             self.start_camera(camera_config) for camera_config in self.camera_configs
@@ -29,30 +31,11 @@ class CameraManager:
         # parameters are the opposite of numpy's (technically it is an array, not an actual image).
         self.frame = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
 
-    def read_config_JSON(self) -> List[Dict]:
-        """Reads camera config JSON.
-
-        Returns:
-            A list of dictionaries containing the name, path, and config info
-            of each camera in the config file.
-        """
-        with open(self.CONFIG_FILE_PATH) as json_file:
-            j = json.load(json_file)
-
-        cameras = j["cameras"]
-        cameras = [
-            {"name": camera["name"], "path": camera["path"], "config": camera}
-            for camera in cameras
-        ]
-
-        return cameras
-
     def start_camera(self, config: Dict):
         """Initialises a camera.
 
         Args:
             config: A dictionary with keys "name", "path", and "config"
-                as found by the read_config_json() function
         Returns:
             A cv2 Videosink
         """
@@ -194,6 +177,7 @@ class MockVideoManager:
 
     def set_camera_property(self, camera, property, value) -> None:
         ...
+
 
 class WebcamCameraManager:
     def __init__(self, camera: int = 0) -> None:

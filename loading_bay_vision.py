@@ -166,6 +166,23 @@ class Vision:
 
 
 if __name__ == "__main__":
-    vision = Vision(CameraManager(), NTConnection())
+    vision = Vision(
+        CameraManager(
+            [
+                {
+                    "name": "Power Port Camera",
+                    "path": "/dev/video0",
+                    "config": {
+                        "pixel format": "yuyv",
+                        "fps": 30,
+                        "height": 240,
+                        "width": 320,
+                        "stream": {"properties": []},
+                    },
+                }
+            ]
+        ),
+        NTConnection(),
+    )
     while True:
         vision.run()
