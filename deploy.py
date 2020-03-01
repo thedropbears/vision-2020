@@ -55,8 +55,9 @@ stdout, stdin, stderr = ssh.exec_command(
 )
 for line in stderr:
     print(line)
-if stdout.channel.recv_exit_status() != 0:
-    print("Something's gone wrong!")
+exit_status = stdout.channel.recv_exit_status()
+if exit_status != 0:
+    print(f"Something's gone wrong! Error exit status: {exit_status}")
     quit()
 else:
     print("Done")
