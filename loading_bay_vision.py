@@ -41,7 +41,10 @@ class Vision:
     def get_image_values(self, frame: np.ndarray):
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
-            self.hsv, LOADING_BAY_HSV_LOWER_BOUND, LOADING_BAY_HSV_UPPER_BOUND, dst=self.mask
+            self.hsv,
+            LOADING_BAY_HSV_LOWER_BOUND,
+            LOADING_BAY_HSV_UPPER_BOUND,
+            dst=self.mask,
         )
         self.image = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGR, dst=self.image)
 
@@ -129,7 +132,8 @@ class Vision:
         outer["area"] = cv2.contourArea(outer["contour"])
 
         if not (
-            abs(outer["area"] / inner["area"] - LOADING_INNER_OUTER_RATIO) < INNER_OUTER_ERROR
+            abs(outer["area"] / inner["area"] - LOADING_INNER_OUTER_RATIO)
+            < INNER_OUTER_ERROR
         ):
             return False, inner, outer
 
