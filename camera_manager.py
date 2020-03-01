@@ -69,7 +69,7 @@ class CameraManager:
         Returns:
             A string containing the camera's error.
         """
-        return self.sources[camera].getError()
+        return self.source.getError()
 
     def notify_error(self, error: str) -> None:
         """Sends an error to the console and the sink.
