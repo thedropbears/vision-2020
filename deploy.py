@@ -50,10 +50,16 @@ ssh.exec_command("sudo svc -d /service/camera")
 print("Done")
 
 print("Making file system writable ... ", end="")
-ssh.exec_command("sudo mount -o remount,rw / ; sudo mount -o remount,rw /boot")
-print("Done")
-
-time.sleep(0.5)
+stdout, stdin, stderr = ssh.exec_command(
+    "sudo mount -o remount,rw / ; sudo mount -o remount,rw /boot"
+)
+for line in stderr:
+    print(line)
+if stdout.channel.recv_exit_status() != 0:
+    print("Something's gone wrong!")
+    quit()
+else:
+    print("Done")
 
 print("Uploading files ... ", end="")
 scp = SCPClient(ssh.get_transport())
