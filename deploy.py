@@ -14,6 +14,7 @@ parser.add_argument(
 parser.add_argument(
     "-pp", "--power-port", help="Upload power port code", action="store_true"
 )
+parser.add_argument("-i", "--initial", help="Set pi to use Python", action="store_true")
 parser.add_argument("-ip", "--ip", help="Specify a custom ip")
 args = parser.parse_args()
 
@@ -33,7 +34,6 @@ elif args.power_port:
 else:
     parser.print_help()
     quit()
-
 
 server_ip = "10.47.74.11" if args.ip is None else args.ip
 username = "pi"
@@ -57,6 +57,9 @@ time.sleep(0.5)
 
 print("Uploading files ... ", end="")
 scp = SCPClient(ssh.get_transport())
+if args.initial:
+    scp.put("runCamera")
+    ssh.exec_command("chmod 755 runCamera")
 scp.put(files, recursive=True)
 scp.put(main_file, remote_path="~/uploaded.py")
 print("Done")
