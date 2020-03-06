@@ -4,7 +4,8 @@ import magic_numbers
 import numpy as np
 from camera_manager import MockImageManager, MockVideoManager, WebcamCameraManager
 from connection import DummyConnection
-from power_port_vision import Vision
+import power_port_vision
+import loading_bay_vision
 
 parser = argparse.ArgumentParser(
     "Simulate code by giving it an image, list of images, video, or camera."
@@ -24,6 +25,9 @@ parser.add_argument(
 parser.add_argument(
     "-pp", "--power-port", help="Simulate with power port code", action="store_true"
 )
+parser.add_argument(
+    "-lb", "--loading-bay", help="Simulate with loading bay code", action="store_true"
+)
 args = parser.parse_args()
 
 if args.image:
@@ -42,8 +46,22 @@ elif args.camera:
     print(f"CAMERA: {args.camera}")
     camera_manager = WebcamCameraManager(int(args.camera))
 
+else:
+    parser.print_help()
+    quit()
+
 connection = DummyConnection()
-vision = Vision(camera_manager, connection)
+
+if args.power_port:
+    vision = power_port_vision.Vision(camera_manager, connection)
+
+elif args.loading_bay:
+    vision = loading_bay_vision.Vision(camera_manager, connection)
+
+else:
+    parser.print_help()
+    quit()
+
 
 while True:
     if args.image:
