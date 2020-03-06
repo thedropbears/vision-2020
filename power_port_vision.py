@@ -100,13 +100,16 @@ class Vision:
     MAX_ZOOM_FACTOR = 5.0
     MAX_TILT_FACTOR = 10
 
+    # Change zoom only if it differs by 5 or more in the zoom scale
+    MIN_ZOOM_DELTA = 0.05
+
     MARGIN = 30
     # We want to zoom such that we scale the excursion to the following maximum,
     # Where excursion is the distance from the centre of the image to either
     # min_x or max_x of the target, whichever is fartest from the image centre.
     MAX_EXCURSION = FRAME_WIDTH / 2 - MARGIN
 
-    NUM_TILT_INCREMENTS = 10  # In each direction, i.e. 10 up, 10 down, from 0
+    NUM_TILT_INCREMENTS = 10  # In each direction, i.e. 10 , 10 down, from 0
 
     def __init__(self, camera_manager: CameraManager, connection: NTConnection) -> None:
         # self.entries = entries
@@ -130,8 +133,9 @@ class Vision:
 
         # The following must be scaled before sending to the camera
         self.zoom_factor = 1.0  # Scales the fov by the inverse of this factor
-        self.tilt_factor = 0  # -10 down to 10 up, as an int
+        self.tilt_factor = 0  # -10 up to 10 down, as an int
         self.reset_zoom_and_tilt()
+        self.set_camera_zoom_and_tilt()
 
     def reset_target_extrema(self):
         # Previous target parameters are in pixels and are used to determine
@@ -149,11 +153,14 @@ class Vision:
             self.set_camera_zoom_and_tilt()
 
     def set_camera_zoom_and_tilt(self):
-        # TODO: check these names
         # Camera takes zoom values from 100 to 500
-        self.camera_manager.set_camera_property("zoom", int(self.zoom_factor * 100))
+        self.camera_manager.set_camera_property(
+            "zoom_absolute", int(self.zoom_factor * 100)
+        )
         # Camera takes tilt values from -36000 to 36000
-        self.camera_manager.set_camera_property("tilt", int(self.tilt_factor * 3600))
+        self.camera_manager.set_camera_property(
+            "tilt_absolute", int(self.tilt_factor * 3600)
+        )
 
     def adjust_zoom_and_tilt(self):
         if (
@@ -174,7 +181,8 @@ class Vision:
             min_from_centre = self.previous_target_min_x - FRAME_WIDTH / 2
             max_from_centre = self.previous_target_max_x - FRAME_WIDTH / 2
             excursion = max(abs(min_from_centre), abs(max_from_centre))
-            new_zoom = self.zoom_factor * self.MAX_EXCURSION / excursion
+            new_zoom = round(self.zoom_factor * self.MAX_EXCURSION / excursion, 2)
+            # round to 2 decimal places because we'll be multiplying by 100
             if new_zoom > self.MAX_ZOOM_FACTOR:
                 new_zoom = self.MAX_ZOOM_FACTOR
             if new_zoom < 1.0:
@@ -187,9 +195,9 @@ class Vision:
             extra_at_top = FRAME_HEIGHT / 2 * (self.zoom_factor - 1.0)
             increment = extra_at_top / self.NUM_TILT_INCREMENTS
             total_current_y = (
-                self.previous_target_top + extra_at_top - self.tilt_factor * increment
+                self.previous_target_top + extra_at_top + self.tilt_factor * increment
             )
-            # We subtract the tilt contribution because positive tilt is negative y
+            # tilt and y are both positive down
             # Next we compute the corresponding total y in the new zoom space
             new_total_y = total_current_y * new_zoom / self.zoom_factor
             # And the same parameters in the new space
@@ -198,9 +206,8 @@ class Vision:
             # The new tilt we want is the difference between the centre of the
             # expanded frame and the new total y, in increments.
             new_expanded_centre_y = FRAME_HEIGHT * new_zoom / 2
-            # cast to int to round toward zero. The sign is reversed
-            # because a positive tilt moves up the screen, i.e. negative y
-            new_tilt = int(-(new_total_y - new_expanded_centre_y) / new_increment)
+            # cast to int to round toward zero
+            new_tilt = int((new_total_y - new_expanded_centre_y) / new_increment)
             # And we clip
             if new_tilt > self.MAX_TILT_FACTOR:
                 new_tilt = self.MAX_TILT_FACTOR
@@ -208,7 +215,7 @@ class Vision:
                 new_tilt = -self.MAX_TILT_FACTOR
             # Finally set and use the new values if either has changed
             if (
-                not math.isclose(new_zoom, self.zoom_factor)
+                abs(new_zoom - self.zoom_factor) > MIN_ZOOM_DELTA
                 or new_tilt != self.tilt_factor
             ):
                 self.zoom_factor = new_zoom
@@ -255,16 +262,14 @@ class Vision:
         return frame
 
     def tilt_factor_to_radians(self, value, half_zoomed_fov_height) -> float:
-        # TODO: Is this the correct orientation for tilt? This assumes postive
-        # tilt moves the view up the sensor.
+        # The following number is the amount of fov height, in metres, we have
+        # available to tilt through in one direction, so we scale the tilt value
+        # from it's range (-10 - 10), to plus or minus this value.
+        # Positive tilt moves the view down the image, which is negative vertical
+        # angle, so the two ranges are inverted.
         vertical_fov_excursion = MAX_FOV_HEIGHT / 2 - half_zoomed_fov_height
         scale_value(
-            value,
-            10.0,
-            -10.0,  # Reverse these if tilt orientation is wrong
-            vertical_fov_excursion,
-            -vertical_fov_excursion,
-            1.0,
+            value, -10.0, 10.0, vertical_fov_excursion, -vertical_fov_excursion, 1.0,
         )
 
     def get_image_values(self, frame: np.ndarray) -> tuple:
