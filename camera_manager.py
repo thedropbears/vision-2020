@@ -132,13 +132,14 @@ class MockImageManager:
 
 
 class MockVideoManager:
-    def __init__(self, video: cv2.VideoCapture):
+    def __init__(self, video: cv2.VideoCapture, display_output: bool = False):
         """Initialises a Mock Video Manager.
 
         Args:
             video: An opencv video, as received by cv2.VideoCapture
         """
         self.video = video
+        self.display_output = display_output
 
     def get_frame(self) -> Tuple[float, np.ndarray]:
         """Returns the next frame of self.video.
@@ -155,7 +156,9 @@ class MockVideoManager:
             return self.video.read()
 
     def send_frame(self, frame: np.ndarray) -> None:
-        ...
+        if self.display_output:
+            cv2.imshow("Image", frame)
+            cv2.waitKey(0)
 
     def get_error(self) -> str:
         return "Error"

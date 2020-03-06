@@ -159,8 +159,7 @@ class Vision:
 
         frame_time, self.frame = self.camera_manager.get_frame()
         if frame_time == 0:
-            error = self.camera_manager.get_error()
-            self.camera_manager.source.notifyError(error)
+            self.camera_manager.notify_error(self.camera_manager.get_error())
             return
         # Flip the image cause originally upside down.
         self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
