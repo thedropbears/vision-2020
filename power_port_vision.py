@@ -97,10 +97,15 @@ class Vision:
     COLOUR_RED = (0, 0, 255)
     COLOUR_YELLOW = (0, 255, 255)
 
+    # Zoom factor is in the range 1.0 - 5.0, which are scaled to 100-500 when
+    # sent to the camera
     MAX_ZOOM_FACTOR = 5.0
+    # Tilt is in very weird values, ranging from -36000 to 36000, but in steps
+    # of 3600, irrespective of zoom. So every zoom level other than 100 has
+    # 10 steps of tilt above and 10 below 0.
     MAX_TILT_FACTOR = 10
 
-    # Change zoom only if it differs by 5 or more in the zoom scale
+    # Change zoom only if it differs by 5 or more in the zoom scale (100-500)
     MIN_ZOOM_DELTA = 0.05
 
     MARGIN = 30
@@ -268,7 +273,7 @@ class Vision:
         # Positive tilt moves the view down the image, which is negative vertical
         # angle, so the two ranges are inverted.
         vertical_fov_excursion = MAX_FOV_HEIGHT / 2 - half_zoomed_fov_height
-        scale_value(
+        return scale_value(
             value, -10.0, 10.0, vertical_fov_excursion, -vertical_fov_excursion, 1.0,
         )
 
@@ -289,6 +294,7 @@ class Vision:
             self.previous_target_top = target_top
             self.previous_target_min_x = min(list(power_port[1][:, :, 0]))
             self.previous_target_max_x = max(list(power_port[1][:, :, 0]))
+            print(f"target top: {target_top}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
             # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
             zoomed_fov_height = MAX_FOV_HEIGHT / self.zoom_factor
