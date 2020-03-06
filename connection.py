@@ -49,8 +49,12 @@ class NTConnection:
 
 
 class DummyConnection:
+    def __init__(self):
+        self.results = None
+
     def send_results(self, results: Results) -> None:
         print(results)
+        self.results = results
 
     def pong(self) -> None:
         ...
