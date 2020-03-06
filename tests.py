@@ -1,5 +1,6 @@
 import cv2
 import magic_numbers
+import math
 import numpy as np
 import power_port_vision
 import pytest
@@ -13,6 +14,7 @@ Results = Tuple[float, float, float]
 
 # This file should be run from the command line with pytest.
 # For example, on Windows, you might do `py -3 -m pytest tests.py`
+
 
 class VisionTests(unittest.TestCase):
 
@@ -33,8 +35,10 @@ class VisionTests(unittest.TestCase):
         results = self.connection.results
         if results is not None:
             print(expected_results)
-            self.assertAlmostEqual(results[0], float(expected_results[0]))
-            self.assertAlmostEqual(results[1], float(expected_results[1]))
+            self.assertLessEqual(abs(results[0] - float(expected_results[0])), 1)
+            self.assertLessEqual(
+                abs(results[1] - float(expected_results[1])), math.radians(5)
+            )
 
     @pytest.mark.xfail
     def test_power_port(self):
