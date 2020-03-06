@@ -1,21 +1,56 @@
-import unittest
 import cv2
+import magic_numbers
+import math
 import numpy as np
-from vision import Vision
+import power_port_vision
+import pytest
+import unittest
+from camera_manager import MockImageManager
+from connection import DummyConnection
+from typing import Tuple
 from utilities.functions import *
+
+Results = Tuple[float, float, float]
+
+# This file should be run from the command line with pytest.
+# For example, on Windows, you might do `py -3 -m pytest tests.py`
 
 
 class VisionTests(unittest.TestCase):
-    def _test_sample_images(self):
-        f = open("./tests/power_port/results.csv", "r")
-        lines = f.read().split("\n")
-        f.close()
-        for line in lines[1:]:
-            values = line.split(",")  # Filename.jpg, 1, 2
-            results = camera_server.get_image_values(cv2.imread(f"./tests/{values[0]}"))
-            if results is not None:
-                for i in range(1, len(values)):
-                    self.assertAlmostEqual(results[i - 1], float(values[i]))
+
+    files = (
+        "./tests/power_port/4m1.png",
+        "./tests/power_port/6m2.png",
+        "./tests/power_port/7m2.png",
+        "./tests/power_port/9m1.png",
+    )
+    expected_results = ((4, 0), (6, 0), (7, 0), (9, 0))
+
+    def _test_power_port_image(self, filename: str, expected_results: Results):
+        # Filename is relative
+        self.frame = cv2.imread(filename)
+        self.camera_manager.change_image(self.frame)
+        self.vision.run()
+
+        results = self.connection.results
+        if results is not None:
+            print(expected_results)
+            self.assertLessEqual(abs(results[0] - float(expected_results[0])), 1)
+            self.assertLessEqual(
+                abs(results[1] - float(expected_results[1])), math.radians(5)
+            )
+
+    @pytest.mark.xfail
+    def test_power_port(self):
+        self.frame = np.zeros(
+            shape=(magic_numbers.FRAME_HEIGHT, magic_numbers.FRAME_WIDTH, 3),
+            dtype=np.uint8,
+        )
+        self.camera_manager = MockImageManager(self.frame, display_output=False)
+        self.connection = DummyConnection()
+        self.vision = power_port_vision.Vision(self.camera_manager, self.connection)
+        for filename, expected_results in zip(self.files, self.expected_results):
+            self._test_power_port_image(filename, expected_results)
 
 
 class UtilitiesTests(unittest.TestCase):

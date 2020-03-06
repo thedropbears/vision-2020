@@ -85,13 +85,14 @@ class CameraManager:
 
 
 class MockImageManager:
-    def __init__(self, image: np.ndarray) -> None:
+    def __init__(self, image: np.ndarray, display_output: bool = False) -> None:
         """Initialises a Mock Image Manager
 
         Args:
             image: A BGR numpy image array
         """
         self.image = image
+        self.display_output = display_output
 
     def change_image(self, new_image: np.ndarray) -> None:
         """Changes self.image.
@@ -111,8 +112,9 @@ class MockImageManager:
         return 0.1, self.image.copy()
 
     def send_frame(self, frame: np.ndarray):
-        cv2.imshow("Image", frame)
-        cv2.waitKey(0)
+        if self.display_output:
+            cv2.imshow("Image", frame)
+            cv2.waitKey(0)
 
     def get_error(self) -> str:
         return "Error"
