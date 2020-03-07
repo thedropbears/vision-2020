@@ -101,15 +101,11 @@ class Vision:
         """
         contour_area = cv2.contourArea(contour)
         if not (contour_area > PP_MIN_CONTOUR_AREA):
-            print(
-                f"Failed Minimum Contour Area Check, {contour_area > PP_MIN_CONTOUR_AREA}"
-            )
             return None
 
         convex_hull = cv2.convexHull(contour)
         convex_area = cv2.contourArea(convex_hull)
         if not (PP_MAX_AREA_RATIO > contour_area / convex_area > PP_MIN_AREA_RATIO):
-            print(f"Failed Contour-Convex Area Check, {contour_area / convex_area}")
             return None
 
         approximation = get_corners_from_contour(contour)
