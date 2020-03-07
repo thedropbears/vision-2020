@@ -26,7 +26,7 @@ TILT_CORRECTION = 2.289  # Degrees, measured delta at 10 metres. Provisional.
 GROUND_ANGLE = math.radians(16.5 + TILT_CORRECTION)  # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
-HSV_LOWER_BOUND = (70, 50, 30)
+HSV_LOWER_BOUND = (60, 50, 30)
 HSV_UPPER_BOUND = (90, 255, 255)
 
 # Target shape parameters
