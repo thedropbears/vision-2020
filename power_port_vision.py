@@ -151,47 +151,6 @@ class Vision:
 
         return frame
 
-    def validate_and_reduce_contour(
-        self, contour: np.ndarray
-    ) -> Optional[Tuple[np.ndarray, int]]:
-        """Test if a contour is valid, then returns the contour's area and 4-point reduction.
-
-        Args:
-            contour: A single opencv contour
-        Returns:
-            The contour's area and approximation if it passes the tests, otherwise None
-
-        Tests:
-            If the contour area is above a certain amount
-            If the ratio of the contour area to convex hull area is within a certain range
-            If the contour's approximation has 4 sides
-        """
-        contour_area = cv2.contourArea(contour)
-        if not (contour_area > PP_MIN_CONTOUR_AREA):
-            return None
-
-        convex_hull = cv2.convexHull(contour)
-        convex_area = cv2.contourArea(convex_hull)
-        if not (PP_MAX_AREA_RATIO > contour_area / convex_area > PP_MIN_AREA_RATIO):
-            return None
-
-        approximation = get_corners_from_contour(contour)
-        if not (len(approximation) == 4):
-            return None
-
-        return contour_area, approximation
-
-    def get_mid(self, contour: np.ndarray) -> tuple:
-        """ Use the cv2 moments to find the centre x of the contour.
-        We just copied it from the opencv reference. The y is just the lowest
-        pixel in the image."""
-        M = cv2.moments(contour)
-        if M["m00"] != 0:
-            cX = int(M["m10"] / M["m00"])
-        else:
-            cX = 160
-        return cX
-
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
