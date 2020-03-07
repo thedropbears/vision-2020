@@ -18,6 +18,65 @@ import time
 from typing import Optional, Tuple
 
 
+class VisionTarget:
+    def __init__(self, contour: np.ndarray) -> None:
+        """Initialise a vision target object
+        
+        Args:
+            contour: a single numpy/opencv contour
+        """
+        self.contour = contour.reshape(-1, 2)
+        self._test_valid()
+
+    def _test_valid(self):
+        self.is_valid_target = True
+
+    def get_leftmost_x(self) -> int:
+        return min(list(self.contour[:, 0]))
+
+    def get_rightmost_x(self) -> int:
+        return max(list(self.contour[:, 0]))
+
+    def get_middle_x(self) -> int:
+        return int((self.get_leftmost_x() + self.get_rightmost_x()) / 2)
+
+    def get_highest_y(self) -> int:
+        return min(list(self.contour[:, 1]))
+
+    def get_lowest_y(self) -> int:
+        return max(list(self.contour[:, 1]))
+
+    def get_middle_y(self) -> int:
+        return int((self.get_highest_y() + self.get_lowest_y()) / 2)
+
+
+class PowerPort(VisionTarget):
+    def _test_valid(self):
+        self.contour_area = cv2.contourArea(self.contour)
+        if self.contour_area > PP_MIN_CONTOUR_AREA:
+
+            self.convex_hull = cv2.convexHull(self.contour).reshape(-1, 2)
+            self.convex_area = cv2.contourArea(self.convex_hull)
+            if (
+                PP_MAX_AREA_RATIO
+                > self.contour_area / self.convex_area
+                > PP_MIN_AREA_RATIO
+            ):
+                self.approximation = get_corners_from_contour(self.contour).reshape(
+                    -1, 2
+                )
+                if len(self.approximation) == 4:
+                    self.is_valid_target = True
+
+                else:
+                    self.is_valid_target = False
+            else:
+                print("Failed area ratio check")
+                self.is_valid_target = False
+        else:
+            self.is_valid_target = False
+
+
 class Vision:
     """Main vision class.
 
@@ -31,6 +90,7 @@ class Vision:
     COLOUR_GREEN = (0, 255, 0)
     COLOUR_BLUE = (255, 0, 0)
     COLOUR_RED = (0, 0, 255)
+    COLOUR_YELLOW = (0, 255, 255)
 
     def __init__(self, camera_manager: CameraManager, connection: NTConnection) -> None:
         # self.entries = entries
@@ -61,32 +121,39 @@ class Vision:
             acceptable_cnts = []
             # Check if the found contour is possibly a target
             for current_contour in cnts:
-                result = self.validate_and_reduce_contour(current_contour)
-                if result is not None:
-                    acceptable_cnts.append(result)
+                power_port = PowerPort(current_contour)
+                if power_port.is_valid_target:
+                    acceptable_cnts.append(power_port)
 
             if acceptable_cnts:
                 if len(acceptable_cnts) > 1:
                     # Pick the largest found 'power port'
-                    power_port_contour = max(acceptable_cnts, key=lambda x: x[0])
+                    power_port = max(acceptable_cnts, key=lambda pp: pp.contour_area)
                 else:
-                    power_port_contour = acceptable_cnts[0]
-                return power_port_contour
+                    power_port = acceptable_cnts[0]
+                return power_port
             else:
                 return None
         else:
             return None
 
-    def create_annotated_display(self, frame: np.ndarray, points: np.ndarray):
+    def create_annotated_display(self, frame: np.ndarray, power_port: PowerPort):
         cv2.drawContours(
-            frame, points.reshape(1, 4, 2), -1, self.COLOUR_BLUE, thickness=2
+            frame,
+            power_port.approximation.reshape(1, 4, 2),
+            -1,
+            self.COLOUR_BLUE,
+            thickness=2,
         )
-        for point in points:
-            cv2.circle(frame, tuple(point[0]), 5, self.COLOUR_BLUE, thickness=2)
+
+        for point in power_port.approximation:
+            cv2.circle(frame, tuple(point), 5, self.COLOUR_YELLOW, thickness=2)
 
         return frame
 
-    def validate_and_reduce_contour(self, contour: np.ndarray) -> Optional[Tuple[np.ndarray, int]]:
+    def validate_and_reduce_contour(
+        self, contour: np.ndarray
+    ) -> Optional[Tuple[np.ndarray, int]]:
         """Test if a contour is valid, then returns the contour's area and 4-point reduction.
 
         Args:
@@ -135,10 +202,10 @@ class Vision:
         power_port = self.find_power_port(self.mask)
 
         if power_port is not None:
-            self.display = self.create_annotated_display(self.display, power_port[1])
-            midX = self.get_mid(power_port[1])
+            self.display = self.create_annotated_display(self.display, power_port)
+            midX = power_port.get_middle_x()
 
-            target_top = min(list(power_port[1][:, :, 1]))
+            target_top = power_port.get_highest_y()
             # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
             horiz_angle = get_horizontal_angle(
