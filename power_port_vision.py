@@ -61,7 +61,7 @@ class Vision:
             acceptable_cnts = []
             # Check if the found contour is possibly a target
             for current_contour in cnts:
-                result = self.test_contour(current_contour)
+                result = self.validate_and_reduce_contour(current_contour)
                 if result is not None:
                     acceptable_cnts.append(result)
 
@@ -86,8 +86,8 @@ class Vision:
 
         return frame
 
-    def test_contour(self, contour: np.ndarray) -> Optional[Tuple[np.ndarray, int]]:
-        """Test if a contour is valid.
+    def validate_and_reduce_contour(self, contour: np.ndarray) -> Optional[Tuple[np.ndarray, int]]:
+        """Test if a contour is valid, then returns the contour's area and 4-point reduction.
 
         Args:
             contour: A single opencv contour
