@@ -3,7 +3,8 @@
 
 """The Drop Bears' 2020 vision code.
 
-This code is run on the Raspberry Pi 4. It is uploaded via the browser interface.
+This code is run on the Raspberry Pi 4. It is uploaded via the deploy script, e.g:
+    python3 deploy.py --power-port
 It can be found at https://github.com/thedropbears/vision-2020
 """
 import cv2
@@ -80,15 +81,21 @@ class PowerPort(VisionTarget):
                 self.is_valid_target = False
         else:
             self.is_valid_target = False
+def _tilt_factor_to_radians(value, half_zoomed_fov_height) -> float:
+    # The following number is the amount of fov height, in metres, we have
+    # available to tilt through in one direction, so we scale the tilt value
+    # from it's range (-10 - 10), to plus or minus this value.
+    # Positive tilt moves the view down the image, which is negative vertical
+    # angle, so the two ranges are inverted.
+    vertical_fov_excursion = MAX_FOV_HEIGHT / 2 - half_zoomed_fov_height
+    return scale_value(
+        value, -10.0, 10.0, vertical_fov_excursion, -vertical_fov_excursion, 1.0,
+    )
 
 
 class Vision:
     """Main vision class.
 
-    An instance should be created, with test=False (default). As long as the cameras are configured
-    correctly via the GUI interface, everything will work without modification required.
-    This will not work on most machines, so tests of the main process function are
-    the only tests that can be done without a Pi running the FRC vision image.
     """
 
     entries = None
@@ -99,6 +106,7 @@ class Vision:
 
     # Zoom factor is in the range 1.0 - 5.0, which are scaled to 100-500 when
     # sent to the camera
+    MIN_ZOOM_FACTOR = 1.0
     MAX_ZOOM_FACTOR = 5.0
     # Tilt is in very weird values, ranging from -36000 to 36000, but in steps
     # of 3600, irrespective of zoom. So every zoom level other than 100 has
@@ -166,6 +174,8 @@ class Vision:
         self.camera_manager.set_camera_property(
             "tilt_absolute", int(self.tilt_factor * 3600)
         )
+        # New settings don't take until two frames later, so skip one now
+        self.camera_manager.get_frame()
 
     def adjust_zoom_and_tilt(self):
         if (
@@ -190,39 +200,54 @@ class Vision:
             # round to 2 decimal places because we'll be multiplying by 100
             if new_zoom > self.MAX_ZOOM_FACTOR:
                 new_zoom = self.MAX_ZOOM_FACTOR
-            if new_zoom < 1.0:
-                new_zoom = 1.0
+            if new_zoom < self.MIN_ZOOM_FACTOR:
+                new_zoom = self.MIN_ZOOM_FACTOR
             # Now we compute the new tilt. We want to put the top of the target
             # as close as possible to the centre of the image.
-            # Compute y position of the top of the target in the current zoom and
-            # tilt space
-            # The pixels above the frame at the current zoom and 0 tilt:
-            extra_at_top = FRAME_HEIGHT / 2 * (self.zoom_factor - 1.0)
-            increment = extra_at_top / self.NUM_TILT_INCREMENTS
-            total_current_y = (
-                self.previous_target_top + extra_at_top + self.tilt_factor * increment
-            )
-            # tilt and y are both positive down
-            # Next we compute the corresponding total y in the new zoom space
-            new_total_y = total_current_y * new_zoom / self.zoom_factor
-            # And the same parameters in the new space
-            new_extra_at_top = FRAME_HEIGHT / 2 * (new_zoom - 1.0)
-            new_increment = new_extra_at_top / self.NUM_TILT_INCREMENTS
-            # The new tilt we want is the difference between the centre of the
-            # expanded frame and the new total y, in increments.
-            new_expanded_centre_y = FRAME_HEIGHT * new_zoom / 2
-            # cast to int to round toward zero
-            new_tilt = int((new_total_y - new_expanded_centre_y) / new_increment)
-            # And we clip
-            if new_tilt > self.MAX_TILT_FACTOR:
-                new_tilt = self.MAX_TILT_FACTOR
-            if new_tilt < -self.MAX_TILT_FACTOR:
-                new_tilt = -self.MAX_TILT_FACTOR
+            # Don't bother with tilt if we aren't zoomed in
+            if new_zoom - self.MIN_ZOOM_FACTOR > self.MIN_ZOOM_DELTA:
+                # Compute y position of the top of the target in the current zoom and
+                # tilt space
+                # The pixels above the frame at the current zoom and 0 tilt:
+                extra_at_top = FRAME_HEIGHT / 2 * (self.zoom_factor - 1.0)
+                increment = extra_at_top / self.NUM_TILT_INCREMENTS
+                total_current_y = (
+                    self.previous_target_top + extra_at_top + self.tilt_factor * increment
+                )
+                # tilt and y are both positive down
+                # Next we compute the corresponding total y in the new zoom space
+                new_total_y = total_current_y * new_zoom / self.zoom_factor
+                # And the same parameters in the new space
+                new_extra_at_top = FRAME_HEIGHT / 2 * (new_zoom - 1.0)
+                new_increment = new_extra_at_top / self.NUM_TILT_INCREMENTS
+                # The new tilt we want is the difference between the centre of the
+                # expanded frame and the new total y, in increments.
+                new_expanded_centre_y = FRAME_HEIGHT * new_zoom / 2
+                # cast to int to round toward zero
+                new_tilt = int((new_total_y - new_expanded_centre_y) / new_increment)
+                # And we clip
+                if new_tilt > self.MAX_TILT_FACTOR:
+                    new_tilt = self.MAX_TILT_FACTOR
+                if new_tilt < -self.MAX_TILT_FACTOR:
+                    new_tilt = -self.MAX_TILT_FACTOR
+            else:
+                new_tilt = 0 # because zoom is so close to 1.0
             # Finally set and use the new values if either has changed
+            print(
+                "old zoom: ",
+                self.zoom_factor,
+                " new zoom: ",
+                new_zoom,
+                " old tilt: ",
+                self.tilt_factor,
+                " new tilt: ",
+                new_tilt,
+            )
             if (
-                abs(new_zoom - self.zoom_factor) > MIN_ZOOM_DELTA
+                abs(new_zoom - self.zoom_factor) > self.MIN_ZOOM_DELTA
                 or new_tilt != self.tilt_factor
             ):
+                print("This is different, so setting camera")
                 self.zoom_factor = new_zoom
                 self.tilt_factor = new_tilt
                 self.set_camera_zoom_and_tilt()
@@ -266,17 +291,6 @@ class Vision:
 
         return frame
 
-    def tilt_factor_to_radians(self, value, half_zoomed_fov_height) -> float:
-        # The following number is the amount of fov height, in metres, we have
-        # available to tilt through in one direction, so we scale the tilt value
-        # from it's range (-10 - 10), to plus or minus this value.
-        # Positive tilt moves the view down the image, which is negative vertical
-        # angle, so the two ranges are inverted.
-        vertical_fov_excursion = MAX_FOV_HEIGHT / 2 - half_zoomed_fov_height
-        return scale_value(
-            value, -10.0, 10.0, vertical_fov_excursion, -vertical_fov_excursion, 1.0,
-        )
-
     def get_image_values(self, frame: np.ndarray) -> tuple:
         """Takes a frame, returns a tuple of results, or None."""
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
@@ -291,9 +305,10 @@ class Vision:
             midX = power_port.get_middle_x()
 
             target_top = power_port.get_highest_y()
+
             self.previous_target_top = target_top
-            self.previous_target_min_x = min(list(power_port[1][:, :, 0]))
-            self.previous_target_max_x = max(list(power_port[1][:, :, 0]))
+            self.previous_target_min_x = min(list(power_port[1][:, :, 0]))[0]
+            self.previous_target_max_x = max(list(power_port[1][:, :, 0]))[0]
             print(f"target top: {target_top}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
             # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
@@ -305,7 +320,7 @@ class Vision:
 
             vert_angle = get_vertical_angle_linear(
                 target_top, FRAME_HEIGHT, zoomed_fov_height / 2, True
-            ) + self.tilt_factor_to_radians(self.tilt_factor, zoomed_fov_height / 2)
+            ) + _tilt_factor_to_radians(self.tilt_factor, zoomed_fov_height / 2)
 
             distance = get_distance(
                 vert_angle, TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
@@ -314,6 +329,7 @@ class Vision:
 
             return (distance, horiz_angle)
         else:
+            print("no power port, so resetting extrema")
             self.reset_target_extrema()
             return None
 
