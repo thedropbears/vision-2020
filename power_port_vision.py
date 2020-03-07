@@ -174,7 +174,8 @@ class Vision:
         self.camera_manager.set_camera_property(
             "tilt_absolute", int(self.tilt_factor * 3600)
         )
-        # New settings don't take until two frames later, so skip one now
+        # New settings don't take until two frames later, so skip two now
+        self.camera_manager.get_frame()
         self.camera_manager.get_frame()
 
     def adjust_zoom_and_tilt(self):
@@ -233,21 +234,21 @@ class Vision:
             else:
                 new_tilt = 0 # because zoom is so close to 1.0
             # Finally set and use the new values if either has changed
-            print(
-                "old zoom: ",
-                self.zoom_factor,
-                " new zoom: ",
-                new_zoom,
-                " old tilt: ",
-                self.tilt_factor,
-                " new tilt: ",
-                new_tilt,
-            )
+            # print(
+            #   "old zoom: ",
+            #    self.zoom_factor,
+            #    " new zoom: ",
+            #    new_zoom,
+            #    " old tilt: ",
+            #    self.tilt_factor,
+            #    " new tilt: ",
+            #    new_tilt,
+            # )
             if (
                 abs(new_zoom - self.zoom_factor) > self.MIN_ZOOM_DELTA
                 or new_tilt != self.tilt_factor
             ):
-                print("This is different, so setting camera")
+                # print("This is different, so setting camera")
                 self.zoom_factor = new_zoom
                 self.tilt_factor = new_tilt
                 self.set_camera_zoom_and_tilt()
@@ -309,7 +310,7 @@ class Vision:
             self.previous_target_top = target_top
             self.previous_target_min_x = min(list(power_port[1][:, :, 0]))[0]
             self.previous_target_max_x = max(list(power_port[1][:, :, 0]))[0]
-            print(f"target top: {target_top}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
+            # print(f"target top: {target_top}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
             # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
             zoomed_fov_height = MAX_FOV_HEIGHT / self.zoom_factor
@@ -325,7 +326,7 @@ class Vision:
             distance = get_distance(
                 vert_angle, TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
             )
-            print("angle: ", math.degrees(vert_angle), " distance: ", distance)
+            print("horizontal angle: ", math.degrees(horiz_angle), " distance: ", distance)
 
             return (distance, horiz_angle)
         else:
