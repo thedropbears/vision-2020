@@ -15,13 +15,12 @@ from magic_numbers import *
 from utilities.functions import *
 import math
 import time
-from typing import Optional, Tuple
 
 
 class VisionTarget:
     def __init__(self, contour: np.ndarray) -> None:
         """Initialise a vision target object
-        
+
         Args:
             contour: a single numpy/opencv contour
         """
@@ -308,8 +307,8 @@ class Vision:
             target_top = power_port.get_highest_y()
 
             self.previous_target_top = target_top
-            self.previous_target_min_x = min(list(power_port[1][:, :, 0]))[0]
-            self.previous_target_max_x = max(list(power_port[1][:, :, 0]))[0]
+            self.previous_target_min_x = power_port.get_leftmost_x()
+            self.previous_target_max_x = power_port.get_rightmost_x()
             # print(f"target top: {target_top}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
             # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
