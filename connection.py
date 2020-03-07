@@ -53,7 +53,7 @@ class DummyConnection:
         self.results = None
 
     def send_results(self, results: Results) -> None:
-        print("results being sent", results)
+        print(results)
         self.results = results
 
     def pong(self) -> None:

@@ -36,7 +36,7 @@ if args.image:
         shape=(magic_numbers.FRAME_HEIGHT, magic_numbers.FRAME_WIDTH, 3), dtype=np.uint8
     )
     current_image = 0
-    camera_manager = MockImageManager(frame, display_output=False)
+    camera_manager = MockImageManager(frame, display_output=True)
 
 elif args.video:
     print(f"VIDEO: {args.video}")
@@ -66,8 +66,8 @@ else:
 while True:
     if args.image:
         frame = cv2.imread(args.image[current_image])
-        camera_manager.change_image(frame)
-        vision.run()
         current_image += 1
+        camera_manager.change_image(frame)
         if current_image == len(args.image):
-            exit()
+            current_image = 0
+    vision.run()

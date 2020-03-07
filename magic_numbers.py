@@ -13,6 +13,8 @@ FOV_DISTANCE = 2234
 MAX_FOV_WIDTH = math.atan2(FOV_WIDTH / 2, FOV_DISTANCE) * 2  # 54.54 degrees
 MAX_FOV_HEIGHT = math.atan2(FOV_HEIGHT / 2, FOV_DISTANCE) * 2  # 42.31 degrees
 
+MAX_ZOOM = 200
+
 # Camera settings
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240
