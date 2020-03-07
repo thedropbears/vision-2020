@@ -26,9 +26,9 @@ class VisionTarget:
             contour: a single numpy/opencv contour
         """
         self.contour = contour.reshape(-1, 2)
-        self._test_valid()
+        self._validate_and_reduce_contour()
 
-    def _test_valid(self):
+    def _validate_and_reduce_contour(self):
         self.is_valid_target = True
 
     def get_leftmost_x(self) -> int:
@@ -51,7 +51,7 @@ class VisionTarget:
 
 
 class PowerPort(VisionTarget):
-    def _test_valid(self):
+    def _validate_and_reduce_contour(self):
         self.contour_area = cv2.contourArea(self.contour)
         if self.contour_area > PP_MIN_CONTOUR_AREA:
 
