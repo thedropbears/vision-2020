@@ -38,7 +38,16 @@ class VisionTarget:
         return max(list(self.contour[:, 0]))
 
     def get_middle_x(self) -> int:
-        return int((self.get_leftmost_x() + self.get_rightmost_x()) / 2)
+        """ Use the cv2 moments to find the centre x of the contour.
+        We just copied it from the opencv reference. The y is just the lowest
+        pixel in the image."""
+        M = cv2.moments(self.contour)
+        if M["m00"] != 0:
+            cX = int(M["m10"] / M["m00"])
+        else:
+            cX = 160
+        return cX
+
 
     def get_highest_y(self) -> int:
         return min(list(self.contour[:, 1]))
