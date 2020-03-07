@@ -55,9 +55,6 @@ class VisionTarget:
     def get_lowest_y(self) -> int:
         return max(list(self.contour[:, 1]))
 
-    def get_middle_y(self) -> int:
-        return int((self.get_highest_y() + self.get_lowest_y()) / 2)
-
 
 class PowerPort(VisionTarget):
     def _validate_and_reduce_contour(self):
