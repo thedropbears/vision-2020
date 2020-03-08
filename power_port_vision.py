@@ -190,17 +190,20 @@ class Vision:
             # from the minimum or maximum x from the centre of the image, and
             # the length we want to scale to is the appropriate maximum, clipped
             # to the maximum and a minimum of 1.
+            # TODO: This test doesn't seem to be exactly correct. Perhaps we
+            # should be computing both zooms and choosing the smaller, as the
+            # larger would cause the other dimension to exceed the margin.
             if (
                 self.previous_power_port.get_width()
                 > self.previous_power_port.get_height()
             ):
-                min_from_centre = abs(
+                left_from_centre = abs(
                     self.previous_power_port.get_leftmost_x() - FRAME_WIDTH / 2
                 )
-                max_from_centre = abs(
+                right_from_centre = abs(
                     self.previous_power_port.get_rightmost_x() - FRAME_WIDTH / 2
                 )
-                horizontal_excursion = max(min_from_centre, max_from_centre)
+                horizontal_excursion = max(left_from_centre, right_from_centre)
                 new_zoom = round(
                     self.zoom_factor
                     * self.MAX_HORIZONTAL_EXCURSION
