@@ -39,10 +39,10 @@ class VisionTarget:
         return max(list(self.contour[:, 0]))
 
     def get_middle_x(self) -> int:
-        return self.get_width() / 2
+        return (self.get_rightmost_x() + self.get_leftmost_x()) / 2
 
     def get_middle_y(self) -> int:
-        return self.get_height() / 2
+        return (self.get_lowest_y() + self.get_highest_y()) / 2
 
     def get_highest_y(self) -> int:
         return min(list(self.contour[:, 1]))
@@ -54,7 +54,7 @@ class VisionTarget:
         return self.get_lowest_y() - self.get_highest_y()
 
     def get_width(self) -> int:
-        return self.get_rightmost_x() - self.get_rightmost_x()
+        return self.get_rightmost_x() - self.get_leftmost_x()
 
 
 class PowerPort(VisionTarget):
@@ -125,7 +125,7 @@ class Vision:
     # maxima, where excursion is the distance from the centre of the image to either
     # min or max x of the target, whichever is fartest from the image centre.
     MAX_HORIZONTAL_EXCURSION = FRAME_WIDTH / 2 - HORIZONTAL_MARGIN
-    MAX_VERTICAL_SIZE = FRAME_HEIGHT / 2 - VERTICAL_MARGIN
+    MAX_VERTICAL_SIZE = FRAME_HEIGHT - VERTICAL_MARGIN * 2
 
     NUM_TILT_INCREMENTS = 10  # In each direction, i.e. 10 , 10 down, from 0
 
@@ -194,19 +194,20 @@ class Vision:
                 self.previous_power_port.get_width()
                 > self.previous_power_port.get_height()
             ):
-                min_from_centre = (
+                min_from_centre = abs(
                     self.previous_power_port.get_leftmost_x() - FRAME_WIDTH / 2
                 )
-                max_from_centre = (
+                max_from_centre = abs(
                     self.previous_power_port.get_rightmost_x() - FRAME_WIDTH / 2
                 )
-                horizontal_excursion = max(abs(min_from_centre), abs(max_from_centre))
+                horizontal_excursion = max(min_from_centre, max_from_centre)
                 new_zoom = round(
                     self.zoom_factor
                     * self.MAX_HORIZONTAL_EXCURSION
                     / horizontal_excursion,
                     2,
                 )
+                print("new zoom from horizontal: ", new_zoom)
             else:
                 new_zoom = round(
                     self.zoom_factor
@@ -214,6 +215,7 @@ class Vision:
                     / self.previous_power_port.get_height(),
                     2,
                 )
+                print("new zoom from vertical: ", new_zoom)
             # round to 2 decimal places because we'll be multiplying by 100
             if new_zoom > self.MAX_ZOOM_FACTOR:
                 new_zoom = self.MAX_ZOOM_FACTOR
