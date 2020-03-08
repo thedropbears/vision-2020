@@ -16,6 +16,8 @@ from utilities.functions import *
 import math
 import time
 
+from typing import Optional
+
 
 class VisionTarget:
     def __init__(self, contour: np.ndarray) -> None:
@@ -37,22 +39,22 @@ class VisionTarget:
         return max(list(self.contour[:, 0]))
 
     def get_middle_x(self) -> int:
-        """ Use the cv2 moments to find the centre x of the contour.
-        We just copied it from the opencv reference. The y is just the lowest
-        pixel in the image."""
-        M = cv2.moments(self.contour)
-        if M["m00"] != 0:
-            cX = int(M["m10"] / M["m00"])
-        else:
-            cX = 160
-        return cX
+        return (self.get_rightmost_x() + self.get_leftmost_x()) / 2
 
+    def get_middle_y(self) -> int:
+        return (self.get_lowest_y() + self.get_highest_y()) / 2
 
     def get_highest_y(self) -> int:
         return min(list(self.contour[:, 1]))
 
     def get_lowest_y(self) -> int:
         return max(list(self.contour[:, 1]))
+
+    def get_height(self) -> int:
+        return self.get_lowest_y() - self.get_highest_y()
+
+    def get_width(self) -> int:
+        return self.get_rightmost_x() - self.get_leftmost_x()
 
 
 class PowerPort(VisionTarget):
@@ -80,6 +82,8 @@ class PowerPort(VisionTarget):
                 self.is_valid_target = False
         else:
             self.is_valid_target = False
+
+
 def _tilt_factor_to_radians(value, half_zoomed_fov_height) -> float:
     # The following number is the amount of fov height, in metres, we have
     # available to tilt through in one direction, so we scale the tilt value
@@ -115,11 +119,13 @@ class Vision:
     # Change zoom only if it differs by 5 or more in the zoom scale (100-500)
     MIN_ZOOM_DELTA = 0.05
 
-    MARGIN = 30
-    # We want to zoom such that we scale the excursion to the following maximum,
-    # Where excursion is the distance from the centre of the image to either
-    # min_x or max_x of the target, whichever is fartest from the image centre.
-    MAX_EXCURSION = FRAME_WIDTH / 2 - MARGIN
+    HORIZONTAL_MARGIN = 30
+    VERTICAL_MARGIN = 30
+    # We want to zoom such that we scale to one of the following
+    # maxima, where excursion is the distance from the centre of the image to either
+    # min or max x of the target, whichever is fartest from the image centre.
+    MAX_HORIZONTAL_EXCURSION = FRAME_WIDTH / 2 - HORIZONTAL_MARGIN
+    MAX_VERTICAL_SIZE = FRAME_HEIGHT - VERTICAL_MARGIN * 2
 
     NUM_TILT_INCREMENTS = 10  # In each direction, i.e. 10 , 10 down, from 0
 
@@ -149,16 +155,8 @@ class Vision:
         self.reset_zoom_and_tilt()
         self.set_camera_zoom_and_tilt()
 
-    def reset_target_extrema(self):
-        # Previous target parameters are in pixels and are used to determine
-        # new zoom and tilt settings for the next frame. Note that these are
-        # valid only for the current zoom and tilt.
-        self.previous_target_min_x = None
-        self.previous_target_max_y = None
-        self.previous_target_top = None
-
     def reset_zoom_and_tilt(self):
-        self.reset_target_extrema()
+        self.previous_power_port = None
         if self.zoom_factor != 1.0 or self.tilt_factor != 0.0:
             self.zoom_factor = 1.0
             self.tilt_factor = 0.0
@@ -178,11 +176,7 @@ class Vision:
         self.camera_manager.get_frame()
 
     def adjust_zoom_and_tilt(self):
-        if (
-            self.previous_target_min_x is not None
-            and self.previous_target_max_x is not None
-            and self.previous_target_top is not None
-        ):
+        if self.previous_power_port is not None:
             # First we compute the new zoom
             # A length in pixels l1 at zoom z1 is related to the length in pixels
             # l2 at zoom z2 by
@@ -190,29 +184,59 @@ class Vision:
             # To compute a new zoom, we want to scale a length l at zoom z1 to a
             # max length l2 at the new zoom z2. Using the above:
             # new_zoom = old_zoom * l2 / l1
-            # The length we want to scale is the excursion from the centre of the
-            # image, and the length we want to scale to is MAX_EXCURSION, clipped
+            # The length we want to scale is either the horizontal excursion or
+            # the height of the target, depending on whether the width or height
+            # of the target is larger. The horizontal excurison is the distance
+            # from the minimum or maximum x from the centre of the image, and
+            # the length we want to scale to is the appropriate maximum, clipped
             # to the maximum and a minimum of 1.
-            min_from_centre = self.previous_target_min_x - FRAME_WIDTH / 2
-            max_from_centre = self.previous_target_max_x - FRAME_WIDTH / 2
-            excursion = max(abs(min_from_centre), abs(max_from_centre))
-            new_zoom = round(self.zoom_factor * self.MAX_EXCURSION / excursion, 2)
+            # TODO: This test doesn't seem to be exactly correct. Perhaps we
+            # should be computing both zooms and choosing the smaller, as the
+            # larger would cause the other dimension to exceed the margin.
+            if (
+                self.previous_power_port.get_width()
+                > self.previous_power_port.get_height()
+            ):
+                left_from_centre = abs(
+                    self.previous_power_port.get_leftmost_x() - FRAME_WIDTH / 2
+                )
+                right_from_centre = abs(
+                    self.previous_power_port.get_rightmost_x() - FRAME_WIDTH / 2
+                )
+                horizontal_excursion = max(left_from_centre, right_from_centre)
+                new_zoom = round(
+                    self.zoom_factor
+                    * self.MAX_HORIZONTAL_EXCURSION
+                    / horizontal_excursion,
+                    2,
+                )
+                print("new zoom from horizontal: ", new_zoom)
+            else:
+                new_zoom = round(
+                    self.zoom_factor
+                    * self.MAX_VERTICAL_SIZE
+                    / self.previous_power_port.get_height(),
+                    2,
+                )
+                print("new zoom from vertical: ", new_zoom)
             # round to 2 decimal places because we'll be multiplying by 100
             if new_zoom > self.MAX_ZOOM_FACTOR:
                 new_zoom = self.MAX_ZOOM_FACTOR
             if new_zoom < self.MIN_ZOOM_FACTOR:
                 new_zoom = self.MIN_ZOOM_FACTOR
-            # Now we compute the new tilt. We want to put the top of the target
+            # Now we compute the new tilt. We want to put the centre of the target
             # as close as possible to the centre of the image.
-            # Don't bother with tilt if we aren't zoomed in
+            # Don't bother with tilt if we aren't zoomed in at least a minimum
             if new_zoom - self.MIN_ZOOM_FACTOR > self.MIN_ZOOM_DELTA:
-                # Compute y position of the top of the target in the current zoom and
+                # Compute y position of the centre of the target in the current zoom and
                 # tilt space
                 # The pixels above the frame at the current zoom and 0 tilt:
                 extra_at_top = FRAME_HEIGHT / 2 * (self.zoom_factor - 1.0)
                 increment = extra_at_top / self.NUM_TILT_INCREMENTS
                 total_current_y = (
-                    self.previous_target_top + extra_at_top + self.tilt_factor * increment
+                    self.previous_power_port.get_middle_y()
+                    + extra_at_top
+                    + self.tilt_factor * increment
                 )
                 # tilt and y are both positive down
                 # Next we compute the corresponding total y in the new zoom space
@@ -231,7 +255,7 @@ class Vision:
                 if new_tilt < -self.MAX_TILT_FACTOR:
                     new_tilt = -self.MAX_TILT_FACTOR
             else:
-                new_tilt = 0 # because zoom is so close to 1.0
+                new_tilt = 0  # because zoom is so close to 1.0
             # Finally set and use the new values if either has changed
             # print(
             #   "old zoom: ",
@@ -252,7 +276,7 @@ class Vision:
                 self.tilt_factor = new_tilt
                 self.set_camera_zoom_and_tilt()
 
-    def find_power_port(self, frame: np.ndarray) -> tuple:
+    def find_power_port(self, frame: np.ndarray) -> Optional[PowerPort]:
         # Convert to RGB to draw contour on - shouldn't recreate every time
         self.display = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR, dst=self.display)
 
@@ -300,18 +324,14 @@ class Vision:
 
         power_port = self.find_power_port(self.mask)
 
+        self.previous_power_port = power_port
         if power_port is not None:
             self.display = self.create_annotated_display(self.display, power_port)
             midX = power_port.get_middle_x()
 
             target_top = power_port.get_highest_y()
 
-            self.previous_target_top = target_top
-            self.previous_target_min_x = power_port.get_leftmost_x()
-            self.previous_target_max_x = power_port.get_rightmost_x()
-            # print(f"target top: {target_top}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
-            # target_bottom = max(list(power_port[:, :, 1]))
-            # print("target top: ", target_top, " target bottom: ", target_bottom)
+            self.previous_power_port = power_port
             zoomed_fov_height = MAX_FOV_HEIGHT / self.zoom_factor
             zoomed_fov_width = MAX_FOV_WIDTH / self.zoom_factor
             horiz_angle = get_horizontal_angle(
@@ -325,12 +345,13 @@ class Vision:
             distance = get_distance(
                 vert_angle, TARGET_HEIGHT_TOP, CAMERA_HEIGHT, GROUND_ANGLE
             )
-            print("horizontal angle: ", math.degrees(horiz_angle), " distance: ", distance)
+            print(
+                "horizontal angle: ", math.degrees(horiz_angle), " distance: ", distance
+            )
 
             return (distance, horiz_angle)
         else:
-            print("no power port, so resetting extrema")
-            self.reset_target_extrema()
+            print("no power port")
             return None
 
     def run(self):
@@ -340,7 +361,7 @@ class Vision:
         """
         self.connection.pong()
 
-        self.adjust_zoom_and_tilt()  # based on previous frame values
+        self.adjust_zoom_and_tilt()  # based on previous power port
         frame_time, self.frame = self.camera_manager.get_frame()
         if frame_time == 0:
             self.camera_manager.notify_error(self.camera_manager.get_error())
