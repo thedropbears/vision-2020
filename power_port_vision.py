@@ -47,6 +47,8 @@ class VisionTarget:
             cX = 160
         return cX
 
+    def get_middle_y(self) -> int:
+        return (self.get_lowest_y() - self.get_highest_y())/2
 
     def get_highest_y(self) -> int:
         return min(list(self.contour[:, 1]))
@@ -80,6 +82,7 @@ class PowerPort(VisionTarget):
                 self.is_valid_target = False
         else:
             self.is_valid_target = False
+
 def _tilt_factor_to_radians(value, half_zoomed_fov_height) -> float:
     # The following number is the amount of fov height, in metres, we have
     # available to tilt through in one direction, so we scale the tilt value
@@ -155,7 +158,7 @@ class Vision:
         # valid only for the current zoom and tilt.
         self.previous_target_min_x = None
         self.previous_target_max_y = None
-        self.previous_target_top = None
+        self.previous_target_centre = None
 
     def reset_zoom_and_tilt(self):
         self.reset_target_extrema()
@@ -181,7 +184,7 @@ class Vision:
         if (
             self.previous_target_min_x is not None
             and self.previous_target_max_x is not None
-            and self.previous_target_top is not None
+            and self.previous_target_centre is not None
         ):
             # First we compute the new zoom
             # A length in pixels l1 at zoom z1 is related to the length in pixels
@@ -202,17 +205,17 @@ class Vision:
                 new_zoom = self.MAX_ZOOM_FACTOR
             if new_zoom < self.MIN_ZOOM_FACTOR:
                 new_zoom = self.MIN_ZOOM_FACTOR
-            # Now we compute the new tilt. We want to put the top of the target
+            # Now we compute the new tilt. We want to put the centre of the target
             # as close as possible to the centre of the image.
             # Don't bother with tilt if we aren't zoomed in
             if new_zoom - self.MIN_ZOOM_FACTOR > self.MIN_ZOOM_DELTA:
-                # Compute y position of the top of the target in the current zoom and
+                # Compute y position of the centre of the target in the current zoom and
                 # tilt space
                 # The pixels above the frame at the current zoom and 0 tilt:
                 extra_at_top = FRAME_HEIGHT / 2 * (self.zoom_factor - 1.0)
                 increment = extra_at_top / self.NUM_TILT_INCREMENTS
                 total_current_y = (
-                    self.previous_target_top + extra_at_top + self.tilt_factor * increment
+                    self.previous_target_centre + extra_at_top + self.tilt_factor * increment
                 )
                 # tilt and y are both positive down
                 # Next we compute the corresponding total y in the new zoom space
@@ -306,10 +309,10 @@ class Vision:
 
             target_top = power_port.get_highest_y()
 
-            self.previous_target_top = target_top
+            self.previous_target_centre = power_port.get_middle_y()
             self.previous_target_min_x = power_port.get_leftmost_x()
             self.previous_target_max_x = power_port.get_rightmost_x()
-            # print(f"target top: {target_top}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
+            # print(f"target centre: {self.previous_target_centre}, min_x: {self.previous_target_min_x}, max_x: {self.previous_target_max_x}")
             # target_bottom = max(list(power_port[:, :, 1]))
             # print("target top: ", target_top, " target bottom: ", target_bottom)
             zoomed_fov_height = MAX_FOV_HEIGHT / self.zoom_factor
