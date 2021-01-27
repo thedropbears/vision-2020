@@ -48,7 +48,7 @@ class Vision:
         )
         self.image = cv2.cvtColor(self.mask, cv2.COLOR_GRAY2BGR, dst=self.image)
 
-        _, cnts, hierarchy = cv2.findContours(
+        *_, cnts, hierarchy = cv2.findContours(
             self.mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE
         )
 
