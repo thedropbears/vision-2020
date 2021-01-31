@@ -6,8 +6,8 @@ import math
 # The following were careful measurements of the frame area with the camera
 # aimed at a flat wall, and the distance of the camera from the wall. All are in
 # millimetres.
-FOV_WIDTH = 1793
-FOV_HEIGHT = 2303
+FOV_WIDTH = 2303
+FOV_HEIGHT = 1793
 FOV_DISTANCE = 2234
 
 MAX_FOV_WIDTH = math.atan2(FOV_WIDTH / 2, FOV_DISTANCE) * 2  # 54.54 degrees
