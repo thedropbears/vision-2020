@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from magic_numbers import *
 from camera_manager import WebcamCameraManager, MockImageManager
+from connection import NTConnection, DummyConnection
 from utilities.functions import *
 import math
 import time
@@ -22,11 +23,26 @@ class Vision:
     MIN_CNT_SIZE = 50
     MAX_CNT_SIZE = 1000000
 
-    def __init__(self, camera_manager) -> None:
+    def __init__(self,  camera_manager: CameraManager, connection: NTConnection) -> None:
+        # Memory allocation
         self.hsv = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
         self.display = self.hsv.copy()
         self.mask = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH), dtype=np.uint8)
+
+        # Camera config
         self.camera_manager = camera_manager
+        self.camera_manager.set_camera_property("white_balance_temperature_auto", 0)
+        self.camera_manager.set_camera_property("exposure_auto", 1)
+        self.camera_manager.set_camera_property("focus_auto", 0)
+        self.camera_manager.set_camera_property("exposure_absolute", 1)
+
+        self.connection = connection
+
+        self.old_fps_time = 0
+
+        self.last_path = None
+        self.path_confidence = 0
+        self.confidence_threshold = 3 # have to see the same path this many times to be sure
 
     def readData(self, file="balls_data.npz"):
         with open(file, "rb") as f:
@@ -36,8 +52,7 @@ class Vision:
         self.knn = cv2.ml.KNearest_create()
         self.knn.train(self.data, cv2.ml.ROW_SAMPLE, self.labels)
 
-    def find_balls(self):
-        _, frame = self.camera_manager.get_frame()
+    def find_balls(self, frame : np.ndarray):
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
             self.hsv,
@@ -77,6 +92,21 @@ class Vision:
         cv2.waitKey()
         return self.normalize(balls_output)
 
+    def find_path(self, frame:np.ndarray):
+        balls = self.find_balls(frame)
+        if len(balls)/3 == 3:
+            angle = get_horizontal_angle(sum([x[0] for x in balls]), FRAME_WIDTH, MAX_FOV_WIDTH / 2)
+
+            ret, result, neighbours, dist = self.knn.findNearest(np.array([balls]), k=5)
+            if self.last_path == ret:
+                self.path_confidence += 1
+            else:
+                self.path_confidence = 0
+            self.last_path = ret
+
+            if self.path_confidence > self.confidence_threshold:
+                return ret, angle
+
     @staticmethod
     def normalize(balls: list):
         # centers a list of ball pos's around 0
@@ -88,22 +118,39 @@ class Vision:
         return np.reshape(np.array(shifted_balls), len(balls)*3).astype(np.float32)
 
     def run(self):
-        balls = self.find_balls()
-        print(balls)
-        if len(balls)/3 == 3:
-            ret, result, neighbours, dist = self.knn.findNearest(np.array([balls]), k=5)
-            print(ret, result, neighbours, dist)
+        self.connection.pong()
+        frame_time, frame = self.camera_manager.get_frame()
+
+        if frame_time == 0:
+            self.camera_manager.notify_error(self.camera_manager.get_error())
+            return
+        # Flip the image cause originally upside down.
+        self.frame = cv2.rotate(self.frame, cv2.ROTATE_180)
+        results = self.find_path(self.frame)
+
+        self.connection.set_fps()
+
+        if results is not None:
+            path, angle = results
+            self.connection.send_results(
+                (path, angle, time.monotonic())
+            )  # path, angle (radians), timestamp
+        self.camera_manager.send_frame(self.display)
 
 
 if __name__ == "__main__":
-    im = cv2.imread("tests/balls/A2-0.jpg")
-    # cv2.imshow("t", im)
-    # cv2.waitKey()
-    # cv2.destroyAllWindows()
-    vision = Vision(MockImageManager(im))  # WebcamCameraManager(1)
-    vision.readData()
-    while True:
+    test = True
+
+    if test:
+        im = cv2.imread("tests/balls/A2-0.jpg")
+        vision = Vision(MockImageManager(im), DummyConnection())  # WebcamCameraManager(1)
+        vision.readData()
         vision.run()
-        # if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-    # vision.camera_manager.video.release()
+        
+    else:
+        vision = Vision(
+            CameraManager("Power Port Camera", "/dev/video0", 240, 320, 30, "kYUYV"),
+            NTConnection(),
+        )
+        while True:
+            vision.run()
