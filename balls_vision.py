@@ -31,15 +31,10 @@ class Vision:
     def readData(self, file="balls_data.npz"):
         with open(file, "rb") as f:
             self._data = np.load(f)
-            self.data = np.array([self._data["balls"]], dtype=np.int64)
-            self.data.reshape((1, self.data.size))
-            self.labels = np.array([self._data["labels"]])
-        print(self.data, type(self.data), self.data.shape, self.data.dtype)
-        print(self.labels, type(self.labels), self.labels.shape, self.labels.dtype)
+            self.data =self._data["balls"].astype(np.float32)
+            self.labels = self._data["labels"].astype(np.float32)
         self.knn = cv2.ml.KNearest_create()
         self.knn.train(self.data, cv2.ml.ROW_SAMPLE, self.labels)
-        ret, result, neighbours, dist = knn.findNearest(test, k=5)
-        pass
 
     def find_balls(self):
         _, frame = self.camera_manager.get_frame()
@@ -79,7 +74,7 @@ class Vision:
                 cv2.circle(frame, (i[0], i[1]), int(math.sqrt(i[2])), (0, 255, 0), 2)
                 balls_output.append(i)
         cv2.imshow("frame", frame)
-        # cv2.waitKey()
+        cv2.waitKey()
         return self.normalize(balls_output)
 
     @staticmethod
@@ -90,16 +85,18 @@ class Vision:
             sum([x[1] for x in balls]) / len(balls),
         )
         shifted_balls = [(x[0] - avg[0], x[1] - avg[1], x[2]) for x in balls]
-        return shifted_balls
+        return np.reshape(np.array(shifted_balls), len(balls)*3).astype(np.float32)
 
-    def run():
+    def run(self):
         balls = self.find_balls()
-        if len(balls) == 3:
-            cv2.knn()
+        print(balls)
+        if len(balls)/3 == 3:
+            ret, result, neighbours, dist = self.knn.findNearest(np.array([balls]), k=5)
+            print(ret, result, neighbours, dist)
 
 
 if __name__ == "__main__":
-    im = cv2.imread("tests/balls/A1-0.jpg")
+    im = cv2.imread("tests/balls/A2-0.jpg")
     # cv2.imshow("t", im)
     # cv2.waitKey()
     # cv2.destroyAllWindows()
@@ -107,9 +104,6 @@ if __name__ == "__main__":
     vision.readData()
     while True:
         vision.run()
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            break
-        # vision.BALL_HSV_UPPER_BOUND = tuple(map(int, input("enter upper ").split(" ")))
-        # vision.BALL_HSV_LOWER_BOUND = tuple(map(int, input("enter lower ").split(" ")))
-        # print(vision.BALL_HSV_LOWER_BOUND, vision.BALL_HSV_UPPER_BOUND)
-    vision.camera_manager.video.release()
+        # if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+    # vision.camera_manager.video.release()

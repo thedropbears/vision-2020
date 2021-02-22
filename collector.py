@@ -23,14 +23,12 @@ if __name__ == "__main__":
         label = i[:2]
         img = cv2.imread(os.path.join(images_path, i))
         vision = Vision(MockImageManager(img))
-        res = vision.find_balls()
-        dataPoss.append(res)
-        dataLabels.append(getNum(label))
-        print(res, labels, getNum(label))
-        while len(dataPoss[-1]) < 3:  # create null balls if it didnt see three
-            dataPoss[-1].append([0, 0, 0])
+        res = np.array( vision.find_balls() )
+        if res.shape[0] == 9:
+            dataPoss.append(res)
+            dataLabels.append(getNum(label))
+            print(res, label, getNum(label))
 
-    dataPoss = np.array(dataPoss, dtype=np.float32)
+    dataPoss = np.array(dataPoss, dtype=np.int8)
     dataLabels = np.array(dataLabels, dtype=np.uint8)
-    with open("balls_data.npz", "wb") as f:
-        np.savez(f, labels=dataLabels, balls=dataPoss)
+    np.savez("balls_data.npz", labels=dataLabels, balls=dataPoss)
