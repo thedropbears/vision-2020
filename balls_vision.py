@@ -35,6 +35,7 @@ class Vision:
         self.camera_manager.set_camera_property("exposure_auto", 1)
         self.camera_manager.set_camera_property("focus_auto", 0)
         self.camera_manager.set_camera_property("exposure_absolute", 1)
+        self.camera_manager.set_camera_property("zoom_absolute", 100)
 
         self.connection = connection
 
@@ -47,6 +48,7 @@ class Vision:
         )  # have to see the same path this many times to be sure (-1 for no delay)
 
     def read_data(self, file="balls_data.npz"):
+        # reads the data from the file to use with the knn
         with open(file, "rb") as f:
             self._data = np.load(f)
             self.data = self._data["balls"].astype(np.float32)
@@ -55,6 +57,7 @@ class Vision:
         self.knn.train(self.data, cv2.ml.ROW_SAMPLE, self.labels)
 
     def create_annotated_display(self, frame, balls):
+        # draws the balls and ball contours onto the frame
         cv2.drawContours(
             frame,
             [b.contour for b in balls],
@@ -74,6 +77,8 @@ class Vision:
         return frame
 
     def find_balls(self, frame: np.ndarray):
+        # finds five largest yellowish contours
+        # returns: returns the position of each ball as an offest from the average of their positions
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
             self.hsv,
@@ -109,16 +114,20 @@ class Vision:
 
         self.display = frame.copy()
         self.display = self.create_annotated_display(self.display, self.balls)
-        return self.normalize(balls_output)
+        return balls_output
 
     def find_path(self, frame: np.ndarray):
+        # from the ball positions it catagorizes it as one of the four paths
+        # uses K Nearest Neighbour with labeled data stored in balls_data.npz
+        # returns: the catagorizations as a int and the angle in radians
         balls = self.find_balls(frame)
-        if len(balls) / 3 == 3:
+        if len(balls) == 3:
             angle = get_horizontal_angle(
-                sum(balls[::3]), FRAME_WIDTH, MAX_FOV_WIDTH / 2
+                sum(b[0] for b in balls), FRAME_WIDTH, MAX_FOV_WIDTH / 2
             )
+            balls_offsets = self.normalize(balls)
 
-            ret, result, neighbours, dist = self.knn.findNearest(np.array([balls]), k=3)
+            ret, result, neighbours, dist = self.knn.findNearest(np.array([balls_offsets]), k=3)
             if self.last_path == ret:
                 self.path_confidence += 1
             else:
@@ -132,7 +141,7 @@ class Vision:
 
     @staticmethod
     def normalize(balls: list):
-        # centers a list of ball pos's around 0
+        # normalizes the positions of balls to be offsets from 0 in pixels, retains size
         avg = (
             sum([x[0] for x in balls]) / len(balls),
             sum([x[1] for x in balls]) / len(balls),
@@ -161,7 +170,7 @@ class Vision:
 
 
 if __name__ == "__main__":
-    test = False
+    test = True
 
     if test:
         im = cv2.imread("tests/balls/B2-0.jpg")
