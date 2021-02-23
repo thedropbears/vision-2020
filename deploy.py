@@ -14,12 +14,15 @@ parser.add_argument(
 parser.add_argument(
     "-pp", "--power-port", help="Upload power port code", action="store_true"
 )
+parser.add_argument(
+    "-bl", "--balls", help="Upload balls code", action="store_true"
+)
 parser.add_argument("-i", "--initial", help="Set pi to use Python", action="store_true")
 parser.add_argument("-ip", "--ip", help="Specify a custom ip")
 args = parser.parse_args()
 
 
-if args.loading_bay and args.power_port:
+if sum(args.loading_bay, args.power_port, args.balls) > 1:
     print(parser.print_help())
     quit()
 
@@ -31,6 +34,10 @@ elif args.power_port:
     main_file = "power_port_vision.py"
     print("Deploying Power Port code")
 
+elif args.balls:
+    main_file = "balls_vision.py"
+    print("Deploying Balls code")
+    
 else:
     parser.print_help()
     quit()
