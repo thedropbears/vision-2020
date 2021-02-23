@@ -23,7 +23,7 @@ class Vision:
     MIN_CNT_SIZE = 50
     MAX_CNT_SIZE = 1000000
 
-    def __init__(self,  camera_manager: CameraManager, connection: NTConnection) -> None:
+    def __init__(self, camera_manager: CameraManager, connection: NTConnection) -> None:
         # Memory allocation
         self.hsv = np.zeros(shape=(FRAME_HEIGHT, FRAME_WIDTH, 3), dtype=np.uint8)
         self.display = self.hsv.copy()
@@ -42,20 +42,38 @@ class Vision:
 
         self.last_path = None
         self.path_confidence = 0
-        self.confidence_threshold = -1 # have to see the same path this many times to be sure (-1 for no delay)
+        self.confidence_threshold = (
+            -1
+        )  # have to see the same path this many times to be sure (-1 for no delay)
 
     def read_data(self, file="balls_data.npz"):
         with open(file, "rb") as f:
             self._data = np.load(f)
-            self.data =self._data["balls"].astype(np.float32)
+            self.data = self._data["balls"].astype(np.float32)
             self.labels = self._data["labels"].astype(np.float32)
         self.knn = cv2.ml.KNearest_create()
         self.knn.train(self.data, cv2.ml.ROW_SAMPLE, self.labels)
 
     def create_annotated_display(self, frame, balls):
+        cv2.drawContours(
+            frame,
+            [b.contour for b in balls],
+            -1,
+            (255, 0, 0),
+            thickness=2,
+        )
 
+        for b in balls:
+            cv2.circle(
+                frame,
+                (int(b.get_middle_x()), int(b.get_middle_y())),
+                int(math.sqrt(b.get_area())),
+                (0, 255, 0),
+                2,
+            )
+        return frame
 
-    def find_balls(self, frame : np.ndarray):
+    def find_balls(self, frame: np.ndarray):
         self.hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV, dst=self.hsv)
         self.mask = cv2.inRange(
             self.hsv,
@@ -64,10 +82,8 @@ class Vision:
             dst=self.mask,
         )
         kernel = np.ones((5, 5), np.uint8)
-        # cv2.imshow("old mask", self.mask)
         self.mask = cv2.dilate(self.mask, kernel, iterations=1)
         self.mask = cv2.erode(self.mask, kernel, iterations=1)
-        # cv2.imshow("new mask", self.mask)
         *_, cnts, _ = cv2.findContours(
             self.mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
@@ -82,23 +98,25 @@ class Vision:
                 ):
                     acceptable_targets.append(Ball(current_contour))
 
-            balls = sorted(acceptable_targets, key=lambda x: x.get_area())[
+            self.balls = sorted(acceptable_targets, key=lambda x: x.get_area())[
                 0:3
             ]  # takes the 3 largest targets
             balls_output = []
-            for target in balls:
+            for target in self.balls:
                 i = [target.get_middle_x(), target.get_middle_y(), target.get_area()]
                 i = list(map(int, i))
-                cv2.circle(frame, (i[0], i[1]), int(math.sqrt(i[2])), (0, 255, 0), 2)
                 balls_output.append(i)
-        self.display = mask.copy()
-        self.create_annotated_display()
+
+        self.display = frame.copy()
+        self.display = self.create_annotated_display(self.display, self.balls)
         return self.normalize(balls_output)
 
-    def find_path(self, frame:np.ndarray):
+    def find_path(self, frame: np.ndarray):
         balls = self.find_balls(frame)
-        if len(balls)/3 == 3:
-            angle = get_horizontal_angle(sum(balls[::3]), FRAME_WIDTH, MAX_FOV_WIDTH / 2)
+        if len(balls) / 3 == 3:
+            angle = get_horizontal_angle(
+                sum(balls[::3]), FRAME_WIDTH, MAX_FOV_WIDTH / 2
+            )
 
             ret, result, neighbours, dist = self.knn.findNearest(np.array([balls]), k=3)
             if self.last_path == ret:
@@ -120,7 +138,7 @@ class Vision:
             sum([x[1] for x in balls]) / len(balls),
         )
         shifted_balls = [(x[0] - avg[0], x[1] - avg[1], x[2]) for x in balls]
-        return np.reshape(np.array(shifted_balls), len(balls)*3).astype(np.float32)
+        return np.reshape(np.array(shifted_balls), len(balls) * 3).astype(np.float32)
 
     def run(self):
         self.connection.pong()
@@ -143,16 +161,18 @@ class Vision:
 
 
 if __name__ == "__main__":
-    test = True
+    test = False
 
     if test:
         im = cv2.imread("tests/balls/B2-0.jpg")
-        vision = Vision(MockImageManager(im), NTConnection())  # WebcamCameraManager(1)
+        vision = Vision(
+            MockImageManager(im, display_output=True), NTConnection()
+        )  # WebcamCameraManager(1)
         vision.read_data()
-        while True:
+        for i in range(1):
             vision.run()
             time.sleep(0.1)
-        
+
     else:
         vision = Vision(
             CameraManager("Power Port Camera", "/dev/video0", 240, 320, 30, "kYUYV"),

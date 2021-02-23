@@ -14,9 +14,7 @@ parser.add_argument(
 parser.add_argument(
     "-pp", "--power-port", help="Upload power port code", action="store_true"
 )
-parser.add_argument(
-    "-bl", "--balls", help="Upload balls code", action="store_true"
-)
+parser.add_argument("-bl", "--balls", help="Upload balls code", action="store_true")
 parser.add_argument("-i", "--initial", help="Set pi to use Python", action="store_true")
 parser.add_argument("-ip", "--ip", help="Specify a custom ip")
 args = parser.parse_args()
@@ -37,7 +35,7 @@ elif args.power_port:
 elif args.balls:
     main_file = "balls_vision.py"
     print("Deploying Balls code")
-    
+
 else:
     parser.print_help()
     quit()

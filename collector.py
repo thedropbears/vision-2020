@@ -23,7 +23,7 @@ if __name__ == "__main__":
         label = i[:2]
         img = cv2.imread(os.path.join(images_path, i))
         vision = Vision(MockImageManager(img))
-        res = np.array( vision.find_balls() )
+        res = np.array(vision.find_balls())
         if res.shape[0] == 9:
             dataPoss.append(res)
             dataLabels.append(getNum(label))
