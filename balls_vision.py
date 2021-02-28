@@ -56,7 +56,7 @@ class Vision:
         self.knn = cv2.ml.KNearest_create()
         self.knn.train(self.data, cv2.ml.ROW_SAMPLE, self.labels)
 
-    def create_annotated_display(self, frame, balls, path):
+    def create_annotated_display(self, frame, balls = [], path = 0):
         # draws the balls and ball contours onto the frame
         cv2.drawContours(
             frame,
@@ -113,13 +113,11 @@ class Vision:
                 ):
                     acceptable_targets.append(Ball(current_contour))
 
-            self.balls = sorted(acceptable_targets, key=lambda x: x.get_area())[
-                0:3
-            ]  # takes the 3 largest targets
+            self.balls = sorted(acceptable_targets, key=lambda x: x.get_area())[:3]  # takes the 3 largest targets
 
             self.balls = sorted(self.balls, key=lambda x:x.get_middle_y()) # sort them by y so they are always in the same order
             for target in self.balls:
-                i = [target.get_middle_x(), target.get_middle_y(), target.get_area()]
+                i = [target.get_middle_x(), target.get_middle_y()]
                 i = list(map(int, i))
                 balls_output.append(i)
 
@@ -149,17 +147,18 @@ class Vision:
             if self.path_confidence > self.confidence_threshold:
                 return ret, angle
         else:
+            self.display = self.create_annotated_display(self.mask)
             print("not enough balls")
 
     @staticmethod
     def normalize(balls: list):
-        # normalizes the positions of balls to be offsets from 0 in pixels, retains size
+        # normalizes the positions of balls to be offsets from 0 in pixels, removes size
         avg = (
             sum([x[0] for x in balls]) / len(balls),
             sum([x[1] for x in balls]) / len(balls),
         )
-        shifted_balls = [(x[0] - avg[0], x[1] - avg[1], x[2]) for x in balls]
-        return np.reshape(np.array(shifted_balls), len(balls) * 3).astype(np.float32)
+        shifted_balls = [(x[0] - avg[0], x[1] - avg[1]) for x in balls]
+        return np.reshape(np.array(shifted_balls), len(balls) * 2).astype(np.float32)
 
     def run(self):
         self.connection.pong()
@@ -185,7 +184,7 @@ if __name__ == "__main__":
     test = True
 
     if test:
-        im = cv2.imread("tests/balls/B2-0.jpg")
+        im = cv2.imread("tests/balls/B1/B1-0.jpg")
         vision = Vision(
             MockImageManager(im, display_output=True), NTConnection()
         )  # WebcamCameraManager(1)
