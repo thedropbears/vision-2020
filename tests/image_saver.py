@@ -5,7 +5,7 @@ pyautogui.FAILSAFE = True
 pyautogui.PAUSE = 0.1
 
 image_pos = [720, 111] # position of the stream on my screen
-img_path = "./balls/A1/{}.png"
+img_path = "./balls/B2/{}.png"
 time.sleep(5)
 while True:
     im_name = img_path.format(round(time.time()))

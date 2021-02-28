@@ -15,12 +15,26 @@ class Ball(VisionTarget):
     def get_area(self) -> int:
         return cv2.contourArea(self.contour)
 
+    def get_width_height_ratio(self) -> int:
+        return max(self.get_width()/self.get_height(), self.get_height()/self.get_width())
+
+    def get_conf(self) -> float: # gets confidence that this is a ball with heuristics
+        # is the area of the countour divided by its width height ratio all multiplied by
+        # the distance from the top of the frame (to prevent detecting the intake roller)
+        area_heur = self.get_area()
+        WH_heur = self.get_width_height_ratio()**3
+        if self.get_lowest_y()/FRAME_HEIGHT < 0.1:
+            y_heur = 0
+        else:
+            y_heur = ((self.get_lowest_y()/FRAME_HEIGHT)-0.1)**0.1
+        self.conf = (area_heur / WH_heur) * y_heur
+        return self.conf
 
 class Vision:
-    BALL_HSV_LOWER_BOUND = (15, 20, 60)
-    BALL_HSV_UPPER_BOUND = (60, 255, 240)
+    BALL_HSV_LOWER_BOUND = (15, 100, 100)
+    BALL_HSV_UPPER_BOUND = (30, 255, 240)
 
-    MIN_CNT_SIZE = 50
+    MIN_CNT_SIZE = 70
     MAX_CNT_SIZE = 1000000
 
     def __init__(self, camera_manager: CameraManager, connection: NTConnection) -> None:
@@ -75,7 +89,6 @@ class Vision:
                 2,
             )
 
-        print(f"given path {path}")
         if path == 1 or path == 3:
             textCol = (200, 10, 10) # red
         elif path == 2 or path == 4:
@@ -113,7 +126,7 @@ class Vision:
                 ):
                     acceptable_targets.append(Ball(current_contour))
 
-            self.balls = sorted(acceptable_targets, key=lambda x: x.get_area())[:3]  # takes the 3 largest targets
+            self.balls = sorted(acceptable_targets, key=lambda x: x.get_conf())[-3:] # takes the 3 most confident
 
             self.balls = sorted(self.balls, key=lambda x:x.get_middle_y()) # sort them by y so they are always in the same order
             for target in self.balls:
@@ -135,19 +148,20 @@ class Vision:
             )
             balls_offsets = self.normalize(balls)
 
-            ret, result, neighbours, dist = self.knn.findNearest(np.array([balls_offsets]), k=1)
+            ret, result, neighbours, dist = self.knn.findNearest(np.array([balls_offsets]), k=3)
             if self.last_path == ret:
                 self.path_confidence += 1
             else:
                 self.path_confidence = 0
             self.last_path = ret
 
-            self.display = self.create_annotated_display(self.mask, self.balls, ret)
-
+            self.display = self.create_annotated_display(self.display, self.balls, ret)
+            cv2.imshow("mask", self.mask)
+            print(f"read path {getPathStr(ret)}")
             if self.path_confidence > self.confidence_threshold:
                 return ret, angle
         else:
-            self.display = self.create_annotated_display(self.mask)
+            self.display = self.create_annotated_display(self.display, self.balls)
             print("not enough balls")
 
     @staticmethod
@@ -184,14 +198,20 @@ if __name__ == "__main__":
     test = True
 
     if test:
-        im = cv2.imread("tests/balls/B1/B1-0.jpg")
-        vision = Vision(
-            MockImageManager(im, display_output=True), NTConnection()
-        )  # WebcamCameraManager(1)
-        vision.read_data()
-        for i in range(1):
-            vision.run()
-            time.sleep(0.1)
+        import os
+
+        imgs = os.listdir("tests/balls/test/")
+        for i in imgs:
+            print("actual", i)
+            im = cv2.imread(os.path.join("tests/balls/test", i))
+            vision = Vision(
+                MockImageManager(im, display_output=True), NTConnection()
+            )  # WebcamCameraManager(1)
+            vision.read_data()
+            for i in range(1):
+                vision.run()
+                time.sleep(0.1)
+            print("")
 
     else:
         vision = Vision(

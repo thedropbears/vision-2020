@@ -14,15 +14,15 @@ def generateData(cap=-1, images_path = "tests/balls", outputFile = "balls_data.n
     labels = []
     for d in folders: 
         try:
-            getPathNum(d) 
+            getPathNum(d) # will error on this if the folder name isnt a path name
             print(f"found file path{d}")
+            images = os.listdir(os.path.join(images_path, d))
+            for i in images:
+                files.append(os.path.join(d, i))
+                labels.append(d)
+
         except:
             print(f"found non path file {d}")
-
-        images = os.listdir(os.path.join(images_path, d))
-        for i in images:
-            files.append(os.path.join(d, i))
-            labels.append(d)
 
     dataLabels = []
     dataPoss = []
