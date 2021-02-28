@@ -30,7 +30,7 @@ class CameraManager:
 
         self.cs = CameraServer.getInstance()
 
-        self.camera = self.cs.startAutomaticCapture(name=name, path=path)
+        self.camera = self.cs.startAutomaticCapture(name=name, path=path, return_server=False)
         self.camera.setVideoMode(
             getattr(VideoMode.PixelFormat, pixel_format), width, height, fps
         )

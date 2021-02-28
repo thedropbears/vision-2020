@@ -43,7 +43,7 @@ class NTConnection:
 
     def set_fps(self) -> None:
         current_time = time.monotonic()
-        fps = 1 / (current_time - self.old_fps_time)
+        fps = 1 / (current_time - self.old_fps_time-0.1e-10) # so that it doesnt divide by 0
         self.old_fps_time = current_time
         self.fps_entry.setDouble(fps)
 
@@ -53,7 +53,7 @@ class DummyConnection:
         self.results = None
 
     def send_results(self, results: Results) -> None:
-        print("results being sent", results)
+        # print("results being sent", results)
         self.results = results
 
     def pong(self) -> None:
