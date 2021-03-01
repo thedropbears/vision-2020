@@ -15,14 +15,15 @@ def generateData(cap=-1, images_path = "tests/balls", outputFile = "balls_data.n
     for d in folders: 
         try:
             getPathNum(d) # will error on this if the folder name isnt a path name
-            print(f"found file path{d}")
+            # print(f"found file path{d}")
             images = os.listdir(os.path.join(images_path, d))
             for i in images:
                 files.append(os.path.join(d, i))
                 labels.append(d)
 
         except:
-            print(f"found non path file {d}")
+            # print(f"found non path file {d}")
+            pass
 
     dataLabels = []
     dataPoss = []
@@ -31,15 +32,13 @@ def generateData(cap=-1, images_path = "tests/balls", outputFile = "balls_data.n
         img = cv2.imread(os.path.join(images_path, i))
         vision = balls_vision.Vision(MockImageManager(img), DummyConnection())
         res = np.array(vision.normalize(vision.find_balls(img)))
-        print(f"found {res.shape[0]/2} balls")
         if res.shape[0] == 6:
             dataPoss.append(res)
             dataLabels.append(getPathNum(label))
             # print(res, label, getPathNum(label))
-        else:
-            print("didnt find three balls")
-    dataPoss = np.array(dataPoss, dtype=np.int8)
-    dataLabels = np.array(dataLabels, dtype=np.uint8)
+    print(f"stored data for {len(dataPoss[:cap])} images")
+    dataPoss = np.array(dataPoss[:cap], dtype=np.int8)
+    dataLabels = np.array(dataLabels[:cap], dtype=np.uint8)
     np.savez(outputFile, labels=dataLabels, balls=dataPoss)
 
 
