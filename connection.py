@@ -35,15 +35,15 @@ class NTConnection:
         self.inst.flush()
 
     def pong(self) -> None:
-        self.ping_time = self.ping.getNumber(0)
+        self.ping_time = self.ping.getDouble(0)
         if abs(self.ping_time - self.last_ping_time) > self.time_to_pong:
-            self.rio_pong.setNumber(self.ping_time)
-            self.raspi_pong.setNumber(self._get_time())
+            self.rio_pong.setDouble(self.ping_time)
+            self.raspi_pong.setDouble(self._get_time())
             self.last_ping_time = self.ping_time
 
     def set_fps(self) -> None:
         current_time = time.monotonic()
-        fps = 1 / (current_time - self.old_fps_time)
+        fps = 1 / (current_time - self.old_fps_time-0.1e-10) # so that it doesnt divide by 0
         self.old_fps_time = current_time
         self.fps_entry.setDouble(fps)
 
@@ -53,7 +53,7 @@ class DummyConnection:
         self.results = None
 
     def send_results(self, results: Results) -> None:
-        print("results being sent", results)
+        # print("results being sent", results)
         self.results = results
 
     def pong(self) -> None:

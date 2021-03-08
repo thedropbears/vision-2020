@@ -3,7 +3,7 @@ from scp import SCPClient
 import argparse
 import time
 
-files = ["magic_numbers.py", "connection.py", "camera_manager.py", "utilities"]
+files = ["magic_numbers.py", "connection.py", "camera_manager.py", "utilities", "vision_target.py", "collector.py", "balls_data.npz"]
 
 parser = argparse.ArgumentParser(
     "Upload code to the Pi. Only one option (power-port or loading-bay) can be used. IP defaults to 10.47.74.11"
@@ -14,12 +14,13 @@ parser.add_argument(
 parser.add_argument(
     "-pp", "--power-port", help="Upload power port code", action="store_true"
 )
+parser.add_argument("-bl", "--balls", help="Upload balls code", action="store_true")
 parser.add_argument("-i", "--initial", help="Set pi to use Python", action="store_true")
 parser.add_argument("-ip", "--ip", help="Specify a custom ip")
 args = parser.parse_args()
 
 
-if args.loading_bay and args.power_port:
+if sum([args.loading_bay, args.power_port, args.balls]) > 1:
     print(parser.print_help())
     quit()
 
@@ -30,6 +31,10 @@ elif args.loading_bay:
 elif args.power_port:
     main_file = "power_port_vision.py"
     print("Deploying Power Port code")
+
+elif args.balls:
+    main_file = "balls_vision.py"
+    print("Deploying Balls code")
 
 else:
     parser.print_help()

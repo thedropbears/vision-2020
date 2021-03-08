@@ -6,8 +6,8 @@ import math
 # The following were careful measurements of the frame area with the camera
 # aimed at a flat wall, and the distance of the camera from the wall. All are in
 # millimetres.
-FOV_WIDTH = 1793
-FOV_HEIGHT = 2303
+FOV_WIDTH = 2303
+FOV_HEIGHT = 1793
 FOV_DISTANCE = 2234
 
 MAX_FOV_WIDTH = math.atan2(FOV_WIDTH / 2, FOV_DISTANCE) * 2  # 54.54 degrees
@@ -21,7 +21,7 @@ CAMERA_HEIGHT = 0.913  # in metres, off the ground
 TARGET_HEIGHT_BOTTOM = 2.064  # in metres, off the ground
 TARGET_HEIGHT_TOP = 2.500  # in metres, off the ground (nominally 2.496 per specs)
 TILT_CORRECTION = 2.289  # Degrees, measured delta at 10 metres. Provisional.
-GROUND_ANGLE = math.radians(16.5 + TILT_CORRECTION)  # Camera tilt, actually
+GROUND_ANGLE = math.radians(16 + TILT_CORRECTION)  # Camera tilt, actually
 
 # Recognition parameters. These should be variables that come from calibration.
 HSV_LOWER_BOUND = (60, 50, 30)
@@ -122,3 +122,10 @@ LOADING_BAY_POINTS = (
 INNER_OUTER_ERROR = 0.5
 
 RAW_RECT_AREA_ERROR = 0.3
+
+# Balls vision stuff
+pathLabels = {1: "A1", 2: "A2", 3: "B1", 4: "B2", 0: "None"}
+getPathNum = lambda x: list(pathLabels.keys())[
+    list(pathLabels.values()).index(x)
+]  # gets the path num from its str name
+getPathStr = lambda x: pathLabels[x]  # gets the path str name from its num

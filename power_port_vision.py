@@ -15,46 +15,8 @@ from magic_numbers import *
 from utilities.functions import *
 import math
 import time
-
+from vision_target import VisionTarget
 from typing import Optional
-
-
-class VisionTarget:
-    def __init__(self, contour: np.ndarray) -> None:
-        """Initialise a vision target object
-
-        Args:
-            contour: a single numpy/opencv contour
-        """
-        self.contour = contour.reshape(-1, 2)
-        self._validate_and_reduce_contour()
-
-    def _validate_and_reduce_contour(self):
-        self.is_valid_target = True
-
-    def get_leftmost_x(self) -> int:
-        return min(list(self.contour[:, 0]))
-
-    def get_rightmost_x(self) -> int:
-        return max(list(self.contour[:, 0]))
-
-    def get_middle_x(self) -> int:
-        return (self.get_rightmost_x() + self.get_leftmost_x()) / 2
-
-    def get_middle_y(self) -> int:
-        return (self.get_lowest_y() + self.get_highest_y()) / 2
-
-    def get_highest_y(self) -> int:
-        return min(list(self.contour[:, 1]))
-
-    def get_lowest_y(self) -> int:
-        return max(list(self.contour[:, 1]))
-
-    def get_height(self) -> int:
-        return self.get_lowest_y() - self.get_highest_y()
-
-    def get_width(self) -> int:
-        return self.get_rightmost_x() - self.get_leftmost_x()
 
 
 class PowerPort(VisionTarget):
@@ -83,6 +45,26 @@ class PowerPort(VisionTarget):
         else:
             self.is_valid_target = False
 
+    def get_middle_x_new(self) -> int:
+        self.corners = get_corners_from_contour(self.contour)  # gets the four corners
+        self.corners = sorted(
+            self.corners, key=lambda x: x[0][0]
+        )  # sort them by x position
+        left_height = np.linalg.norm(
+            self.corners[0] - self.corners[1]
+        )  # find difference between two left corners
+        right_height = np.linalg.norm(
+            self.corners[2] - self.corners[3]
+        )  # difference of two right corners
+        # print("heights ", right_height, left_height)
+        # print("x's", self.get_rightmost_x(), self.get_leftmost_x())
+        ratio = left_height / right_height
+        # print(self.get_rightmost_x() * ratio + self.get_leftmost_x() * 1 - ratio)
+        return self.get_rightmost_x() * ratio + self.get_leftmost_x() * 1 - ratio
+
+    def get_middle_x(self) -> int:
+        return (self.get_rightmost_x() + self.get_leftmost_x()) / 2
+
 
 def _tilt_factor_to_radians(value, half_zoomed_fov_height) -> float:
     # The following number is the amount of fov height, in metres, we have
@@ -92,14 +74,17 @@ def _tilt_factor_to_radians(value, half_zoomed_fov_height) -> float:
     # angle, so the two ranges are inverted.
     vertical_fov_excursion = MAX_FOV_HEIGHT / 2 - half_zoomed_fov_height
     return scale_value(
-        value, -10.0, 10.0, vertical_fov_excursion, -vertical_fov_excursion, 1.0,
+        value,
+        -10.0,
+        10.0,
+        vertical_fov_excursion,
+        -vertical_fov_excursion,
+        1.0,
     )
 
 
 class Vision:
-    """Main vision class.
-
-    """
+    """Main vision class."""
 
     entries = None
     COLOUR_GREEN = (0, 255, 0)
@@ -210,7 +195,7 @@ class Vision:
                     / horizontal_excursion,
                     2,
                 )
-                print("new zoom from horizontal: ", new_zoom)
+                # print("new zoom from horizontal: ", new_zoom)
             else:
                 new_zoom = round(
                     self.zoom_factor
@@ -218,7 +203,7 @@ class Vision:
                     / self.previous_power_port.get_height(),
                     2,
                 )
-                print("new zoom from vertical: ", new_zoom)
+                # print("new zoom from vertical: ", new_zoom)
             # round to 2 decimal places because we'll be multiplying by 100
             if new_zoom > self.MAX_ZOOM_FACTOR:
                 new_zoom = self.MAX_ZOOM_FACTOR
@@ -280,7 +265,9 @@ class Vision:
         # Convert to RGB to draw contour on - shouldn't recreate every time
         self.display = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR, dst=self.display)
 
-        *_, cnts, _ = cv2.findContours(frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        *_, cnts, _ = cv2.findContours(
+            frame, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
         if len(cnts) >= 1:
             acceptable_cnts = []
             # Check if the found contour is possibly a target
@@ -312,6 +299,21 @@ class Vision:
 
         for point in power_port.approximation:
             cv2.circle(frame, tuple(point), 5, self.COLOUR_YELLOW, thickness=2)
+
+        # cv2.circle(
+        #     frame,
+        #     (int(power_port.get_middle_x()), int(power_port.get_middle_y())),
+        #     5,
+        #     self.COLOUR_GREEN,
+        #     thickness=2,
+        # )  # new
+        # cv2.circle(
+        #     frame,
+        #     (int(power_port.get_middle_x_old()), int(power_port.get_middle_y())),
+        #     5,
+        #     self.COLOUR_RED,
+        #     thickness=2,
+        # )  # old
 
         return frame
 
