@@ -57,8 +57,10 @@ class Vision:
         self.last_path = None
         self.path_confidence = 0
         self.confidence_threshold = (
-            -1
+            15
         )  # have to see the same path this many times to be sure (-1 for no delay)
+
+        self.balls = []
 
     def read_data(self, file="balls_data.npz"):
         # reads the data from the file to use with the knn
@@ -163,7 +165,7 @@ class Vision:
             if self.path_confidence > self.confidence_threshold:
                 return ret, angle
         else:
-            self.display = self.create_annotated_display(self.display, self.balls)
+            self.display = self.create_annotated_display(frame, self.balls)
             print("not enough balls")
 
     @staticmethod
